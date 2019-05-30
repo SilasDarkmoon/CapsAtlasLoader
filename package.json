@@ -1,0 +1,19 @@
+{
+
+    "name": "cn.capstones.atlasloader",
+
+    "displayName": "Capstone Sprite Atlas Loader",
+
+    "version": "0.0.1",
+
+    "unity": "2018.3",
+
+    "description": "Capstone Sprite Atlas Loader",
+
+    "keywords": [
+        "unity"
+    ],
+
+    "category": "Unity"
+
+}
