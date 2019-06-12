@@ -22,29 +22,32 @@ namespace Capstones.UnityEditorEx
             _NewMap.Clear();
             _FullSet.Clear();
 
-            var cachefile = output + "/res/inatlas.txt";
-            if (PlatDependant.IsFileExist(cachefile))
+            if (!string.IsNullOrEmpty(output))
             {
-                try
+                var cachefile = output + "/res/inatlas.txt";
+                if (PlatDependant.IsFileExist(cachefile))
                 {
-                    string json = "";
-                    using (var sr = PlatDependant.OpenReadText(cachefile))
+                    try
                     {
-                        json = sr.ReadToEnd();
-                    }
-                    var jo = new JSONObject(json);
-                    var joc = jo["tex"] as JSONObject;
-                    if (joc != null && joc.type == JSONObject.Type.OBJECT)
-                    {
-                        for (int i = 0; i < joc.list.Count; ++i)
+                        string json = "";
+                        using (var sr = PlatDependant.OpenReadText(cachefile))
                         {
-                            var key = joc.keys[i];
-                            var val = joc.list[i].str;
-                            _OldMap[key] = val;
+                            json = sr.ReadToEnd();
+                        }
+                        var jo = new JSONObject(json);
+                        var joc = jo["tex"] as JSONObject;
+                        if (joc != null && joc.type == JSONObject.Type.OBJECT)
+                        {
+                            for (int i = 0; i < joc.list.Count; ++i)
+                            {
+                                var key = joc.keys[i];
+                                var val = joc.list[i].str;
+                                _OldMap[key] = val;
+                            }
                         }
                     }
+                    catch { }
                 }
-                catch { }
             }
 
             var assets = AssetDatabase.GetAllAssetPaths();
