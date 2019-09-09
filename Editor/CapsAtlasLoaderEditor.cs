@@ -311,5 +311,62 @@ namespace Capstones.UnityEditorEx
                 }
             }
         }
+
+        public static void SetCurrentAtlasProperties(string profile)
+        {
+            var path = CapsModEditor.FindAssetInMods("AtlasProperties_" + profile + ".asset");
+            if (path != null)
+            {
+                var properties = AssetDatabase.LoadAssetAtPath<AtlasDefaultProperties>(path);
+                if (properties != null)
+                {
+                    var selections = Selection.assetGUIDs;
+                    if (selections != null)
+                    {
+                        for (int i = 0; i < selections.Length; ++i)
+                        {
+                            var sel = selections[i];
+                            var atlaspath = AssetDatabase.GUIDToAssetPath(sel);
+                            if (atlaspath != null)
+                            {
+                                var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(atlaspath);
+                                if (atlas)
+                                {
+                                    if (properties.iOSFormat != 0)
+                                    {
+                                        var settings = UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(atlas, "iPhone");
+                                        settings.overridden = true;
+                                        settings.format = properties.iOSFormat;
+                                        settings.allowsAlphaSplitting = true;
+                                        settings.compressionQuality = 100;
+                                        UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, settings);
+                                    }
+                                    if (properties.AndroidFormat != 0)
+                                    {
+                                        var settings = UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(atlas, "Android");
+                                        settings.overridden = true;
+                                        settings.format = properties.AndroidFormat;
+                                        settings.allowsAlphaSplitting = true;
+                                        settings.compressionQuality = 100;
+                                        UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, settings);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        [MenuItem("Atlas/Set Atlas Settings - Low", priority = 100010)]
+        public static void SetCurrentAtlasPropertiesLow()
+        {
+            SetCurrentAtlasProperties("Low");
+        }
+        [MenuItem("Atlas/Set Atlas Settings - High", priority = 100020)]
+        public static void SetCurrentAtlasPropertiesHigh()
+        {
+            SetCurrentAtlasProperties("High");
+        }
     }
 }
