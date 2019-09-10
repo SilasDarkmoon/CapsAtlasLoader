@@ -361,10 +361,6 @@ namespace Capstones.UnityEditorEx
                                         UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, settings);
                                         UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[1] { atlas }, BuildTarget.Android, false);
                                     }
-
-                                    Sprite[] sprites = new Sprite[atlas.spriteCount];
-                                    atlas.GetSprites(sprites);
-                                    MoveSelectedSprites(sprites);
                                 }
                             }
                         }
@@ -382,51 +378,6 @@ namespace Capstones.UnityEditorEx
         public static void SetCurrentAtlasPropertiesHigh()
         {
             SetCurrentAtlasProperties("High");
-        }
-
-        private static void MoveSelectedSprites(Sprite[] sprites)
-        {
-            for (int i = 0; i < sprites.Length; ++i) {
-                Sprite item = sprites[i];
-                string texturePath = AssetDatabase.GetAssetPath(item.texture);
-                string newTexturePath = GetAssetPathWithUITextures(texturePath);
-                MoveAsset(texturePath, newTexturePath);
-            }
-        }
-
-        private static string GetAssetPathWithUITextures(string path)
-        {
-            if (!path.StartsWith("Assets/UITextures/"))
-            {
-                path = "Assets/UITextures/" + path.Substring("Assets/".Length);
-            }
-
-            return path;
-        }
-
-        private static string MoveAsset(string oldPath, string newPath)
-        {
-            if (oldPath == newPath) return string.Empty;
-
-            string directoryPath = Path.GetDirectoryName(newPath);
-
-            if (directoryPath == null)
-            {
-                return newPath + ": this path is not a vaild path.";
-            }
-
-            if (!Directory.Exists(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            }
-
-            if (File.Exists(newPath))
-            {
-                AssetDatabase.DeleteAsset(newPath);
-            }
-
-            return AssetDatabase.MoveAsset(oldPath, newPath);
         }
     }
 }
