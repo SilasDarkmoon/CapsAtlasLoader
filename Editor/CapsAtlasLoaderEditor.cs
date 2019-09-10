@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using Capstones.UnityEngineEx;
+using System.IO;
 
 namespace Capstones.UnityEditorEx
 {
@@ -332,6 +333,12 @@ namespace Capstones.UnityEditorEx
                                 var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(atlaspath);
                                 if (atlas)
                                 {
+                                    UnityEditor.U2D.SpriteAtlasPackingSettings packSettings = UnityEditor.U2D.SpriteAtlasExtensions.GetPackingSettings(atlas);
+                                    packSettings.enableTightPacking = false;
+                                    packSettings.enableRotation = false;
+                                    packSettings.padding = 2;
+                                    UnityEditor.U2D.SpriteAtlasExtensions.SetPackingSettings(atlas, packSettings);
+
                                     if (properties.iOSFormat != 0)
                                     {
                                         var settings = UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(atlas, "iPhone");
@@ -339,7 +346,9 @@ namespace Capstones.UnityEditorEx
                                         settings.format = properties.iOSFormat;
                                         settings.allowsAlphaSplitting = true;
                                         settings.compressionQuality = 100;
+                                        settings.maxTextureSize = 1024;
                                         UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, settings);
+                                        UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[1] { atlas }, BuildTarget.iOS, false);
                                     }
                                     if (properties.AndroidFormat != 0)
                                     {
@@ -348,7 +357,9 @@ namespace Capstones.UnityEditorEx
                                         settings.format = properties.AndroidFormat;
                                         settings.allowsAlphaSplitting = true;
                                         settings.compressionQuality = 100;
+                                        settings.maxTextureSize = 1024;
                                         UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, settings);
+                                        UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[1] { atlas }, BuildTarget.Android, false);
                                     }
                                 }
                             }
