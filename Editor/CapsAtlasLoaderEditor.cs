@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using Capstones.UnityEngineEx;
-using System.IO;
 
 namespace Capstones.UnityEditorEx
 {
@@ -348,7 +347,7 @@ namespace Capstones.UnityEditorEx
                                         settings.compressionQuality = 100;
                                         settings.maxTextureSize = 1024;
                                         UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, settings);
-                                        UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[1] { atlas }, BuildTarget.iOS, false);
+                                        UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, BuildTarget.iOS, false);
                                     }
                                     if (properties.AndroidFormat != 0)
                                     {
@@ -359,7 +358,7 @@ namespace Capstones.UnityEditorEx
                                         settings.compressionQuality = 100;
                                         settings.maxTextureSize = 1024;
                                         UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, settings);
-                                        UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[1] { atlas }, BuildTarget.Android, false);
+                                        UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, BuildTarget.Android, false);
                                     }
                                 }
                             }
