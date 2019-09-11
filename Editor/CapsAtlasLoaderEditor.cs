@@ -332,11 +332,17 @@ namespace Capstones.UnityEditorEx
                                 var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(atlaspath);
                                 if (atlas)
                                 {
+                                    UnityEditor.U2D.SpriteAtlasExtensions.SetIncludeInBuild(atlas, false);
+
                                     UnityEditor.U2D.SpriteAtlasPackingSettings packSettings = UnityEditor.U2D.SpriteAtlasExtensions.GetPackingSettings(atlas);
                                     packSettings.enableTightPacking = false;
                                     packSettings.enableRotation = false;
                                     packSettings.padding = 2;
                                     UnityEditor.U2D.SpriteAtlasExtensions.SetPackingSettings(atlas, packSettings);
+
+                                    UnityEditor.U2D.SpriteAtlasTextureSettings textureSettings = UnityEditor.U2D.SpriteAtlasExtensions.GetTextureSettings(atlas);
+                                    textureSettings.sRGB = false;
+                                    UnityEditor.U2D.SpriteAtlasExtensions.SetTextureSettings(atlas, textureSettings);
 
                                     if (properties.iOSFormat != 0)
                                     {
