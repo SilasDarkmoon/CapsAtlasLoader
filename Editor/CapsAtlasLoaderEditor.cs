@@ -314,11 +314,11 @@ namespace Capstones.UnityEditorEx
 
         public static void SetCurrentAtlasProperties(string profile)
         {
-            var path = CapsModEditor.FindAssetInMods("AtlasProperties_" + profile + ".asset");
+            var path = CapsModEditor.FindAssetInMods("AtlasTemplate_" + profile + ".spriteatlas");
             if (path != null)
             {
-                var properties = AssetDatabase.LoadAssetAtPath<AtlasDefaultProperties>(path);
-                if (properties != null)
+                var template = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(path);
+                if (template != null)
                 {
                     var selections = Selection.assetGUIDs;
                     if (selections != null)
@@ -332,33 +332,37 @@ namespace Capstones.UnityEditorEx
                                 var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(atlaspath);
                                 if (atlas)
                                 {
-                                    UnityEditor.U2D.SpriteAtlasPackingSettings packSettings = UnityEditor.U2D.SpriteAtlasExtensions.GetPackingSettings(atlas);
-                                    packSettings.enableTightPacking = false;
-                                    packSettings.enableRotation = false;
-                                    packSettings.padding = 2;
-                                    UnityEditor.U2D.SpriteAtlasExtensions.SetPackingSettings(atlas, packSettings);
+                                    UnityEditor.U2D.SpriteAtlasExtensions.SetIncludeInBuild(atlas, false);
+                                    UnityEditor.U2D.SpriteAtlasExtensions.SetPackingSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetPackingSettings(template));
+                                    UnityEditor.U2D.SpriteAtlasExtensions.SetTextureSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetTextureSettings(template));
 
-                                    if (properties.iOSFormat != 0)
+                                    UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(template, "DefaultTexturePlatform"));
+                                    var buildTargetNames = Enum.GetNames(typeof(BuildTargetGroup));
+                                    for (int j = 0; j < buildTargetNames.Length; ++j)
                                     {
-                                        var settings = UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(atlas, "iPhone");
-                                        settings.overridden = true;
-                                        settings.format = properties.iOSFormat;
-                                        settings.allowsAlphaSplitting = true;
-                                        settings.compressionQuality = 100;
-                                        settings.maxTextureSize = 1024;
-                                        UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, settings);
-                                        UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, BuildTarget.iOS, false);
-                                    }
-                                    if (properties.AndroidFormat != 0)
-                                    {
-                                        var settings = UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(atlas, "Android");
-                                        settings.overridden = true;
-                                        settings.format = properties.AndroidFormat;
-                                        settings.allowsAlphaSplitting = true;
-                                        settings.compressionQuality = 100;
-                                        settings.maxTextureSize = 1024;
-                                        UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, settings);
-                                        UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, BuildTarget.Android, false);
+                                        var platsettings = UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(template, buildTargetNames[j]);
+                                        if (platsettings != null && platsettings.overridden)
+                                        {
+                                            UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, platsettings);
+
+                                            BuildTargetGroup bgroup;
+                                            Enum.TryParse(buildTargetNames[j], out bgroup);
+                                            for (int k = 0; k < buildTargetNames.Length; ++k)
+                                            {
+                                                BuildTargetGroup bgroupcur;
+                                                Enum.TryParse(buildTargetNames[k], out bgroupcur);
+                                                if (bgroup == bgroupcur)
+                                                {
+                                                    BuildTarget btar;
+                                                    if (Enum.TryParse(buildTargetNames[k], out btar))
+                                                    {
+                                                        Debug.LogFormat("Now packing {0} on {1}.", atlas.name, btar);
+                                                        UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, btar, false);
+                                                        Debug.LogFormat("Packing done {0} on {1}.", atlas.name, btar);
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
