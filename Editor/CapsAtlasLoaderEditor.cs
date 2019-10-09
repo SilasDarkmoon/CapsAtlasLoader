@@ -26,6 +26,22 @@ namespace Capstones.UnityEditorEx
                 CacheAllAtlas();
                 SaveCachedAtlas();
             }
+
+            UnityEngine.U2D.SpriteAtlasManager.atlasRequested += (name, funcReg) =>
+            {
+                if (UnityEditor.EditorSettings.spritePackerMode == UnityEditor.SpritePackerMode.AlwaysOnAtlas && !(ResManager.ResLoader is ResManager.ClientResLoader))
+                {
+                    string assetName;
+                    if (_CachedAtlas.TryGetValue(name, out assetName))
+                    {
+                        var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(assetName);
+                        if (atlas)
+                        {
+                            funcReg(atlas);
+                        }
+                    }
+                }
+            };
         }
 
         public static void LoadCachedAtlas()
