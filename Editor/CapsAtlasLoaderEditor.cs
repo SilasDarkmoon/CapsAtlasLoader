@@ -405,35 +405,21 @@ namespace Capstones.UnityEditorEx
 
         private static void RenameAtlasName(string atlaspath)
         {
-            string[] list = atlaspath.Split(new char[] { '/' }, System.StringSplitOptions.RemoveEmptyEntries);
-            int index = 0;
-            if (atlaspath.StartsWith("Assets/CapsRes/dist"))
-            {
-                index = 4;
-            }
-            else if (atlaspath.StartsWith("Assets/CapsRes"))
-            {
-                index = 3;
-            }
-
             string type;
             string mod;
             string dist;
-            ResManager.GetAssetNormPath(atlaspath, out type, out mod, out dist);
+            string folder = Path.GetDirectoryName(atlaspath);
+            string ret = ResManager.GetAssetNormPath(folder, out type, out mod, out dist);
 
             StringBuilder sb = new StringBuilder();
             sb.Append("m").Append("-").Append(mod.ToLower()).Append("-").Append("d").Append("-").Append(dist.ToLower()).Append("-");
-            for (int i = index; i < list.Length - 1; i++)
-            {
-                sb.Append(list[i]).Append("-");
-            }
+            sb.Append(ret.Replace('/', '-')).Append("-");
             string newNamePre = sb.ToString().ToLower();
             if (atlaspath.Contains(newNamePre))
             {
                 return;
             }
-
-            string folder = Path.GetDirectoryName(atlaspath);
+            
             int subIndex = 0;
             while (true)
             {
