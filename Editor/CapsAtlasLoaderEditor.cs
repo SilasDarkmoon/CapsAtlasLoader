@@ -409,19 +409,29 @@ namespace Capstones.UnityEditorEx
             int index = 0;
             if (atlaspath.StartsWith("Assets/CapsRes/dist"))
             {
-                index = 3;
+                index = 4;
             }
             else if (atlaspath.StartsWith("Assets/CapsRes"))
             {
-                index = 2;
+                index = 3;
             }
-            
+
+            string type;
+            string mod;
+            string dist;
+            ResManager.GetAssetNormPath(atlaspath, out type, out mod, out dist);
+
             StringBuilder sb = new StringBuilder();
+            sb.Append("m").Append("-").Append(mod.ToLower()).Append("-").Append("d").Append("-").Append(dist.ToLower()).Append("-");
             for (int i = index; i < list.Length - 1; i++)
             {
-                sb.Append(list[i]).Append("_");
+                sb.Append(list[i]).Append("-");
             }
-            string newNamePre = sb.ToString();
+            string newNamePre = sb.ToString().ToLower();
+            if (atlaspath.Contains(newNamePre))
+            {
+                return;
+            }
 
             string folder = Path.GetDirectoryName(atlaspath);
             int subIndex = 0;
