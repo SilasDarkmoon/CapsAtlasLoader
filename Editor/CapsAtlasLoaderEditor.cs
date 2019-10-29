@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Collections;
+using System.IO;
+using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -380,6 +382,8 @@ namespace Capstones.UnityEditorEx
                                             }
                                         }
                                     }
+
+                                    RenameAtlasName(atlaspath);
                                 }
                             }
                         }
@@ -397,6 +401,41 @@ namespace Capstones.UnityEditorEx
         public static void SetCurrentAtlasPropertiesHigh()
         {
             SetCurrentAtlasProperties("High");
+        }
+
+        private static void RenameAtlasName(string atlaspath)
+        {
+            string[] list = atlaspath.Split(new char[] { '/' }, System.StringSplitOptions.RemoveEmptyEntries);
+            int index = 0;
+            if (atlaspath.StartsWith("Assets/CapsRes/dist"))
+            {
+                index = 3;
+            }
+            else if (atlaspath.StartsWith("Assets/CapsRes"))
+            {
+                index = 2;
+            }
+            
+            StringBuilder sb = new StringBuilder();
+            for (int i = index; i < list.Length - 1; i++)
+            {
+                sb.Append(list[i]).Append("_");
+            }
+            string newNamePre = sb.ToString();
+
+            string folder = Path.GetDirectoryName(atlaspath);
+            int subIndex = 0;
+            while (true)
+            {
+                ++subIndex;
+                bool isExists = File.Exists(folder + '/' + newNamePre + subIndex + ".spriteatlas");
+                if (!isExists)
+                {
+                    break;
+                }
+            }
+            string newName = newNamePre + subIndex + ".spriteatlas";
+            AssetDatabase.RenameAsset(atlaspath, newName);
         }
     }
 }
