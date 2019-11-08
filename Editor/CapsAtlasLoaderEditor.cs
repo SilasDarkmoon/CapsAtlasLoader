@@ -390,6 +390,10 @@ namespace Capstones.UnityEditorEx
                     }
                 }
             }
+            else
+            {
+                Debug.LogError("Please create AtlasTemplate_" + profile + ".spriteatlas in any mod folder.");
+            }
         }
 
         [MenuItem("Atlas/Set Atlas Settings - Low", priority = 100010)]
