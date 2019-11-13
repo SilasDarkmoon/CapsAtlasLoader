@@ -7,6 +7,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using Capstones.UnityEngineEx;
+using UnityEngine.U2D;
+using UnityEditor.U2D;
+using System.Threading;
 
 namespace Capstones.UnityEditorEx
 {
@@ -383,7 +386,7 @@ namespace Capstones.UnityEditorEx
                                         }
                                     }
 
-                                    RenameAtlasName(atlaspath);
+                                    RenameAtlasName(atlaspath, atlas);
                                 }
                             }
                         }
@@ -403,7 +406,41 @@ namespace Capstones.UnityEditorEx
             SetCurrentAtlasProperties("High");
         }
 
-        private static void RenameAtlasName(string atlaspath)
+        [MenuItem("Atlas/Remove From Atlas List", priority = 100021)]
+        public static void RemoveFromAtlasList()
+        {
+            UnityEngine.Object[] obs = Selection.objects;
+            List<SpriteAtlas> sas = new List<SpriteAtlas>();
+            for (int i = 0; i < obs.Length; i++)
+            {
+                UnityEngine.Object item = obs[i];
+                var path = AssetDatabase.GetAssetPath(item);
+                string name = Path.GetFileNameWithoutExtension(path);
+                if (name.Contains("-p-"))
+                {
+                    string[] arr = name.Split('-');
+                    int index = int.Parse(arr[arr.Length - 1]);
+                    string atlasPath = GetSpriteAtlasPathBySpritePath(path, index);
+                    SpriteAtlas sa = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasPath);
+                    if (sa)
+                    {
+                        SpriteAtlasExtensions.Remove(sa, new UnityEngine.Object[] { item });
+                        string ex = Path.GetExtension(path);
+                        string newName = arr[0] + ex;
+                        AssetDatabase.RenameAsset(path, newName);
+
+                        if (!sas.Contains(sa))
+                        {
+                            sas.Add(sa);
+                        }
+                    }
+                }
+            }
+
+            //BuildAtlas(sas.ToArray());
+        }
+
+        private static void RenameAtlasName(string atlaspath, UnityEngine.U2D.SpriteAtlas atlas)
         {
             string type;
             string mod;
@@ -417,6 +454,10 @@ namespace Capstones.UnityEditorEx
             string newNamePre = sb.ToString().ToLower();
             if (atlaspath.Contains(newNamePre))
             {
+                string currentName = Path.GetFileNameWithoutExtension(atlaspath);
+                string[] arr = currentName.Split('-');
+                int tailIndex = int.Parse(arr[arr.Length - 1]);
+                RenameSpriteNameWPacked(atlas, tailIndex);
                 return;
             }
             
@@ -432,6 +473,56 @@ namespace Capstones.UnityEditorEx
             }
             string newName = newNamePre + subIndex + ".spriteatlas";
             AssetDatabase.RenameAsset(atlaspath, newName);
+
+            RenameSpriteNameWPacked(atlas, subIndex);
+        }
+
+        private static void RenameSpriteNameWPacked(UnityEngine.U2D.SpriteAtlas atlas, int index)
+        {
+            UnityEngine.Object[] obs = UnityEditor.U2D.SpriteAtlasExtensions.GetPackables(atlas);
+            for (int k = 0; k < obs.Length; k++)
+            {
+                var spPath = AssetDatabase.GetAssetPath(obs[k]);
+                string name = Path.GetFileNameWithoutExtension(spPath);
+                // 已经打过图集了
+                if (name.Contains("-p-"))
+                {
+                    continue;
+                }
+                string ex = Path.GetExtension(spPath);
+                StringBuilder sb = new StringBuilder();
+                sb.Append(name).Append("-").Append("p").Append("-").Append(index).Append(ex);
+                string newName = sb.ToString();
+                AssetDatabase.RenameAsset(spPath, newName);
+            }
+        }
+
+        private static string GetSpriteAtlasPathBySpritePath(string path, int index)
+        {
+            string type1;
+            string mod1;
+            string dist1;
+            string folder = Path.GetDirectoryName(path);
+            DirectoryInfo info = Directory.GetParent(folder);
+            folder = info + "/SpriteAtlas";
+            string ret = ResManager.GetAssetNormPath(folder, out type1, out mod1, out dist1);
+            StringBuilder sb = new StringBuilder();
+            sb.Append("m-").Append(mod1.ToLower()).Append("-d-").Append(dist1.ToLower()).Append('-');
+            sb.Append(ret.Replace('/', '-')).Append('-');
+
+            string newNamePre = sb.ToString().ToLower();
+            return folder + '/' + newNamePre + index + ".spriteatlas";
+        }
+
+        private static void BuildAtlas(SpriteAtlas[] atlas)
+        {
+            // 现在删除再打包会crash，这个要查一下，先提交
+            BuildTarget[] ts = new BuildTarget[] { BuildTarget.iOS, BuildTarget.Android };
+            for (int i = 0; i < ts.Length; i++)
+            {
+                BuildTarget item = ts[i];
+                SpriteAtlasUtility.PackAtlases(atlas, item, false);
+            }
         }
     }
 }
