@@ -3,9 +3,9 @@
     "references": [
         "ResManager",
         "ResManagerEditor",
-        "JsonObject"
+        "JsonObject",
+        "ResManagerEditor.ResBuilder"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
@@ -14,5 +14,6 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": []
+    "defineConstraints": [],
+    "versionDefines": []
 }
