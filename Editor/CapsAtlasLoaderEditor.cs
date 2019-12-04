@@ -419,7 +419,7 @@ namespace Capstones.UnityEditorEx
         }
 
         [MenuItem("Atlas/Goto Packed atlas", priority = 100041)]
-        public static void GotoPackedÁtlas()
+        public static void GotoPackedAtlas()
         {
             var assets = Selection.objects;
             if (assets != null && assets.Length > 0)
