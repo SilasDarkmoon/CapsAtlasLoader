@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using Capstones.UnityEngineEx;
+using UnityEngine.U2D;
+using UnityEditor.Graphs;
 
 namespace Capstones.UnityEditorEx
 {
@@ -16,6 +18,8 @@ namespace Capstones.UnityEditorEx
         internal static readonly Dictionary<string, string> _CachedAtlas = new Dictionary<string, string>();
         internal static readonly Dictionary<string, string> _CachedAtlasRev = new Dictionary<string, string>();
         //internal static readonly Dictionary<string, List<string>> _TexInAtlas = new Dictionary<string, List<string>>();
+        static readonly Dictionary<string, string> _CachedAtlasSpriteGUID = new Dictionary<string, string>();
+        static readonly Dictionary<string, string> _CachedAtlasPath = new Dictionary<string, string>();
 
         static CapsAtlasLoaderEditor()
         {
@@ -405,6 +409,114 @@ namespace Capstones.UnityEditorEx
         public static void SetCurrentAtlasPropertiesHigh()
         {
             SetCurrentAtlasProperties("High");
+        }
+
+        [MenuItem("Atlas/Show Sprite In Which Atlas", priority = 100040)]
+        private static void ShowSpriteWhichAtlas()
+        {
+            LoadCachedAtlas2();
+            EditorApplication.projectWindowItemOnGUI += ProjectWindowItemOnGUI;
+        }
+
+        [MenuItem("Atlas/Goto Packed atlas", priority = 100041)]
+        public static void GotoPackedÁtlas()
+        {
+            var assets = Selection.objects;
+            if (assets != null && assets.Length > 0)
+            {
+                List<SpriteAtlas> trans = new List<SpriteAtlas>();
+                foreach (var asset in assets)
+                {
+                    string spPath = AssetDatabase.GetAssetPath(asset);
+                    string spGuid = AssetDatabase.AssetPathToGUID(spPath);
+
+                    string atlasPath;
+                    if (_CachedAtlasPath.TryGetValue(spGuid, out atlasPath))
+                    {
+                        SpriteAtlas ob = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasPath);
+                        trans.Add(ob);
+                    }
+                }
+
+                if (trans.Count > 0)
+                {
+                    ProjectWindowUtil.ShowCreatedAsset(trans[0]);
+                    Selection.objects = trans.ToArray();
+                }
+            }
+        }
+
+        private static void LoadCachedAtlas2()
+        {
+            _CachedAtlasSpriteGUID.Clear();
+            _CachedAtlasPath.Clear();
+            if (PlatDependant.IsFileExist("EditorOutput/Runtime/atlas.txt"))
+            {
+                string json = "";
+                using (var sr = PlatDependant.OpenReadText("EditorOutput/Runtime/atlas.txt"))
+                {
+                    json = sr.ReadToEnd();
+                }
+                try
+                {
+                    var jo = new JSONObject(json);
+                    try
+                    {
+                        var joc = jo["atlas"] as JSONObject;
+                        if (joc != null && joc.type == JSONObject.Type.ARRAY)
+                        {
+                            for (int i = 0; i < joc.list.Count; ++i)
+                            {
+                                var val = joc.list[i].str;
+                                SaveSpriteGUID(val);
+                            }
+                        }
+                    }
+                    catch { }
+                }
+                catch { }
+            }
+        }
+
+        private static void SaveSpriteGUID(string atlasPath)
+        {
+            SpriteAtlas sa = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasPath);
+            if (sa != null)
+            {
+                string atlasName = Path.GetFileNameWithoutExtension(atlasPath);
+                string[] list = atlasName.Split('-');
+                int size = list.Length;
+                if (size < 3)
+                {
+                    return;
+                }
+                StringBuilder sb = new StringBuilder();
+                sb.Append(list[size - 4]).Append('-').Append(list[size - 3]).Append('-').Append(list[size - 1]);
+                string shortName = sb.ToString();
+                Sprite[] sps = new Sprite[sa.spriteCount];
+                int ret = sa.GetSprites(sps);
+                for (int i = 0; i < sps.Length; i++)
+                {
+                    Sprite item = sps[i];
+                    string spPath = AssetDatabase.GetAssetPath(item.texture);
+                    string guid = AssetDatabase.AssetPathToGUID(spPath);
+                    _CachedAtlasSpriteGUID[guid] = shortName;
+                    _CachedAtlasPath[guid] = atlasPath;
+                }
+            }
+        }
+
+        private static void ProjectWindowItemOnGUI(string guid, Rect rect)
+        {
+            string atlasName;
+            if (_CachedAtlasSpriteGUID.TryGetValue(guid, out atlasName))
+            {
+                var centeredStyle = GUI.skin.GetStyle("Label");
+                centeredStyle.alignment = TextAnchor.MiddleRight;
+                centeredStyle.padding.right = 5;
+                GUI.Label(rect, atlasName, centeredStyle);
+                EditorApplication.RepaintProjectWindow();
+            }
         }
 
         private static void RenameAtlasName(string atlaspath)
