@@ -9,6 +9,7 @@ using UnityEditor;
 using Capstones.UnityEngineEx;
 using UnityEngine.U2D;
 using UnityEditor.Graphs;
+using UnityEditor.U2D;
 
 namespace Capstones.UnityEditorEx
 {
@@ -421,6 +422,7 @@ namespace Capstones.UnityEditorEx
         [MenuItem("Atlas/Goto Packed atlas", priority = 100041)]
         public static void GotoPackedAtlas()
         {
+            LoadCachedAtlas2();
             var assets = Selection.objects;
             if (assets != null && assets.Length > 0)
             {
@@ -515,6 +517,13 @@ namespace Capstones.UnityEditorEx
                 centeredStyle.alignment = TextAnchor.MiddleRight;
                 centeredStyle.padding.right = 5;
                 GUI.Label(rect, atlasName, centeredStyle);
+                EditorApplication.RepaintProjectWindow();
+            }
+            else
+            {
+                var centeredStyle = GUI.skin.GetStyle("Label");
+                centeredStyle.alignment = TextAnchor.UpperLeft;
+                GUI.Label(rect, "", centeredStyle);
                 EditorApplication.RepaintProjectWindow();
             }
         }
