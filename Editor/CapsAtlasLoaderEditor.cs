@@ -448,6 +448,49 @@ namespace Capstones.UnityEditorEx
             }
         }
 
+        [MenuItem("Atlas/SetTextureCompression", priority = 100061)]
+        public static void SetTextureCompression()
+        {
+            var assets = Selection.objects;
+            int size = assets.Length;
+            if (assets != null && size > 0)
+            {
+                for (int i = 0; i < size; i++)
+                {
+                    
+                    Texture tex = assets[i] as Texture;
+                    string path = AssetDatabase.GetAssetPath(tex);
+                    string name = Path.GetFileName(path);
+                    EditorUtility.DisplayProgressBar("===设置中===", name, i / size);
+                    if (tex && (path.EndsWith(".png") ||
+                        path.EndsWith(".jpg") ||
+                        path.EndsWith(".tga") ||
+                        path.EndsWith(".psd")))
+                    {
+                        TextureImporter texImporter = TextureImporter.GetAtPath(path) as TextureImporter;
+
+                        TextureImporterPlatformSettings androidSettings = texImporter.GetPlatformTextureSettings("Android");
+                        androidSettings.overridden = true;
+                        androidSettings.maxTextureSize = 512;
+                        androidSettings.format = TextureImporterFormat.ETC2_RGBA8Crunched;
+                        texImporter.SetPlatformTextureSettings(androidSettings);
+
+                        TextureImporterPlatformSettings iosSettings = texImporter.GetPlatformTextureSettings("iOS");
+                        iosSettings.overridden = true;
+                        iosSettings.maxTextureSize = 512;
+                        iosSettings.format = TextureImporterFormat.ASTC_6x6;
+                        texImporter.SetPlatformTextureSettings(iosSettings);
+
+                        AssetDatabase.SaveAssets();
+                        DoAssetReimport(path, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+                    }
+                }
+
+                EditorUtility.ClearProgressBar();
+                EditorUtility.DisplayDialog("成功", "处理完成！", "好的");
+            }
+        }
+
         private static void LoadCachedAtlas2()
         {
             _CachedAtlasSpriteGUID.Clear();
@@ -557,6 +600,19 @@ namespace Capstones.UnityEditorEx
             }
             string newName = newNamePre + subIndex + ".spriteatlas";
             AssetDatabase.RenameAsset(atlaspath, newName);
+        }
+
+        private static void DoAssetReimport(string path, ImportAssetOptions options)
+        {
+            try
+            {
+                AssetDatabase.StartAssetEditing();
+                AssetDatabase.ImportAsset(path, options);
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
         }
     }
 }
