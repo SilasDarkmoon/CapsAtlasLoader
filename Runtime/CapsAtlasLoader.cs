@@ -43,17 +43,23 @@ namespace Capstones.UnityEngineEx
 
         private static IEnumerator LateLoadWork()
         {
-            yield return null;
-            _Started = true;
-            foreach (var name in _LateLoadQueue)
+            try
             {
-                var atlas = ResManager.LoadRes("atlas/" + name, typeof(UnityEngine.U2D.SpriteAtlas)) as UnityEngine.U2D.SpriteAtlas;
-                if (atlas)
-                {
-                    _RegFunc(atlas);
-                }
+                yield return null;
             }
-            _LateLoadQueue.Clear();
+            finally
+            { // using finally is that the coroutine runner may be destroyed when some component starts.
+                _Started = true;
+                foreach (var name in _LateLoadQueue)
+                {
+                    var atlas = ResManager.LoadRes("atlas/" + name, typeof(UnityEngine.U2D.SpriteAtlas)) as UnityEngine.U2D.SpriteAtlas;
+                    if (atlas)
+                    {
+                        _RegFunc(atlas);
+                    }
+                }
+                _LateLoadQueue.Clear();
+            }
         }
     }
 }
