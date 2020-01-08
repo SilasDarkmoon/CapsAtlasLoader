@@ -247,7 +247,7 @@ namespace Capstones.UnityEditorEx
         //        }
 
         //        bool changed = false;
-        //        var subs = UnityEditor.U2D.SpriteAtlasExtensions.GetPackables(atlas);
+        //        var subs = UnityEditor.U2D.SpriteAtlasExtensions.GetPackables(atlas); // should change to atlas.GetSprites
         //        HashSet<string> newset = new HashSet<string>();
         //        if (subs != null)
         //        {
@@ -412,6 +412,72 @@ namespace Capstones.UnityEditorEx
             SetCurrentAtlasProperties("High");
         }
 
+        //public static List<string> GetAssetsInFolder<T>(string folder, bool recursive = true) where T : Object
+        //{
+        //    List<string> rv = new List<string>();
+        //    if (AssetDatabase.IsValidFolder(folder))
+        //    {
+        //        AssetDatabase.FindAssets()
+        //    }
+        //    return rv;
+        //}
+
+        public static string[] GetPackedPathsInAtlas(string atlasPath)
+        { // LATER: use GetPackables() and enumerate sprites in packed folders.
+            List<string> rv = new List<string>();
+            var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasPath);
+            if (atlas)
+            {
+                var sprites = new Sprite[atlas.spriteCount];
+                atlas.GetSprites(sprites);
+                for (int j = 0; j < sprites.Length; ++j)
+                {
+                    var child = AssetDatabase.GetAssetPath(sprites[j].texture);
+                    rv.Add(child);
+                }
+            }
+            return rv.ToArray();
+        }
+
+        //[MenuItem("Atlas/Show Sprites In Atlas", priority = 100040)]
+        //private static void ShowSpritesInAtlas()
+        //{
+        //    if (Selection.assetGUIDs != null)
+        //    {
+        //        for (int i = 0; i < Selection.assetGUIDs.Length; ++i)
+        //        {
+        //            var guid = Selection.assetGUIDs[i];
+        //            var path = AssetDatabase.GUIDToAssetPath(guid);
+        //            var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
+        //            if (atlas)
+        //            {
+        //                Debug.Log("Packables in " + path);
+        //                var packables = atlas.GetPackables();
+        //                for (int j = 0; j < packables.Length; ++j)
+        //                {
+        //                    var child = AssetDatabase.GetAssetPath(packables[j]);
+        //                    if (AssetDatabase.IsValidFolder(child))
+        //                    {
+        //                        Debug.Log("(Folder) " + child);
+        //                    }
+        //                    else
+        //                    {
+        //                        Debug.Log(child);
+        //                    }
+        //                }
+        //                Debug.Log("Sprites in " + path);
+        //                var sprites = new Sprite[atlas.spriteCount];
+        //                atlas.GetSprites(sprites);
+        //                for (int j = 0; j < sprites.Length; ++j)
+        //                {
+        //                    var child = AssetDatabase.GetAssetPath(sprites[j].texture);
+        //                    Debug.Log(child);
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
+
         [MenuItem("Atlas/Show Sprite In Which Atlas", priority = 100040)]
         private static void ShowSpriteWhichAtlas()
         {
@@ -538,12 +604,10 @@ namespace Capstones.UnityEditorEx
                 StringBuilder sb = new StringBuilder();
                 sb.Append(list[size - 4]).Append('-').Append(list[size - 3]).Append('-').Append(list[size - 1]);
                 string shortName = sb.ToString();
-                Sprite[] sps = new Sprite[sa.spriteCount];
-                int ret = sa.GetSprites(sps);
-                for (int i = 0; i < sps.Length; i++)
+                var subs = GetPackedPathsInAtlas(atlasPath);
+                for (int i = 0; i < subs.Length; ++i)
                 {
-                    Sprite item = sps[i];
-                    string spPath = AssetDatabase.GetAssetPath(item.texture);
+                    string spPath = subs[i];
                     string guid = AssetDatabase.AssetPathToGUID(spPath);
                     _CachedAtlasSpriteGUID[guid] = shortName;
                     _CachedAtlasPath[guid] = atlasPath;

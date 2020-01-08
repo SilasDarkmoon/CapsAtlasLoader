@@ -62,13 +62,12 @@ namespace Capstones.UnityEditorEx
                         if (atlas)
                         {
                             var name = atlas.tag;
-                            var packed = UnityEditor.U2D.SpriteAtlasExtensions.GetPackables(atlas);
+                            var packed = CapsAtlasLoaderEditor.GetPackedPathsInAtlas(asset);
                             if (packed != null)
                             {
                                 for (int j = 0; j < packed.Length; ++j)
                                 {
-                                    var item = packed[j];
-                                    var path = AssetDatabase.GetAssetPath(item);
+                                    var path = packed[j];
                                     if (!string.IsNullOrEmpty(path))
                                     {
                                         _NewMap[path] = name;
