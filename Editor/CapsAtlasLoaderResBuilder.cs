@@ -59,7 +59,7 @@ namespace Capstones.UnityEditorEx
                     if (asset.EndsWith(".spriteatlas"))
                     {
                         var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(asset);
-                        if (atlas)
+                        if (atlas && !atlas.isVariant)
                         {
                             var name = atlas.tag;
                             var packed = CapsAtlasLoaderEditor.GetPackedPathsInAtlas(asset);

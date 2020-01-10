@@ -412,6 +412,51 @@ namespace Capstones.UnityEditorEx
             SetCurrentAtlasProperties("High");
         }
 
+        [MenuItem("Atlas/Create Atlas Variant", priority = 100030)]
+        public static void CreateAtlasVariant()
+        {
+            var guids = Selection.assetGUIDs;
+            if (guids != null)
+            {
+                for (int i = 0; i < guids.Length; ++i)
+                {
+                    var guid = guids[i];
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (path.EndsWith(".spriteatlas"))
+                    {
+                        var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
+                        if (atlas && !atlas.isVariant)
+                        {
+                            string type, mod, dist;
+                            string norm = ResManager.GetAssetNormPath(path, out type, out mod, out dist);
+                            var movePath = "Assets/";
+                            if (!string.IsNullOrEmpty(mod))
+                            {
+                                movePath += "Mods/" + mod + "/";
+                            }
+                            movePath += "CapsRes/dist/largeatlas";
+                            if (!string.IsNullOrEmpty(dist))
+                            {
+                                movePath += "_" + dist;
+                            }
+                            movePath += "/" + norm;
+                            var movedir = Path.GetDirectoryName(movePath);
+                            Directory.CreateDirectory(movedir);
+                            AssetDatabase.ImportAsset(movedir);
+                            AssetDatabase.MoveAsset(path, movePath);
+
+                            SpriteAtlas vatlas = new SpriteAtlas();
+                            vatlas.SetIsVariant(true);
+                            vatlas.SetMasterAtlas(atlas);
+                            vatlas.SetVariantScale(0.5f);
+                            vatlas.SetIncludeInBuild(false);
+                            AssetDatabase.CreateAsset(vatlas, path);
+                        }
+                    }
+                }
+            }
+        }
+
         //public static List<string> GetAssetsInFolder<T>(string folder, bool recursive = true) where T : Object
         //{
         //    List<string> rv = new List<string>();
@@ -478,14 +523,14 @@ namespace Capstones.UnityEditorEx
         //    }
         //}
 
-        [MenuItem("Atlas/Show Sprite In Which Atlas", priority = 100040)]
+        [MenuItem("Atlas/Show Sprite In Which Atlas", priority = 100110)]
         private static void ShowSpriteWhichAtlas()
         {
             LoadCachedAtlas2();
             EditorApplication.projectWindowItemOnGUI += ProjectWindowItemOnGUI;
         }
 
-        [MenuItem("Atlas/Goto Packed atlas", priority = 100041)]
+        [MenuItem("Atlas/Goto Packed atlas", priority = 100120)]
         public static void GotoPackedAtlas()
         {
             LoadCachedAtlas2();
@@ -514,7 +559,7 @@ namespace Capstones.UnityEditorEx
             }
         }
 
-        [MenuItem("Atlas/SetTextureCompression", priority = 100061)]
+        [MenuItem("Atlas/SetTextureCompression", priority = 100610)]
         public static void SetTextureCompression()
         {
             var assets = Selection.objects;
