@@ -468,19 +468,47 @@ namespace Capstones.UnityEditorEx
         //}
 
         public static string[] GetPackedPathsInAtlas(string atlasPath)
-        { // LATER: use GetPackables() and enumerate sprites in packed folders.
+        {
             List<string> rv = new List<string>();
             var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasPath);
             if (atlas)
             {
-                var sprites = new Sprite[atlas.spriteCount];
-                atlas.GetSprites(sprites);
-                for (int j = 0; j < sprites.Length; ++j)
+                var packables = atlas.GetPackables();
+                if (packables != null)
                 {
-                    var child = AssetDatabase.GetAssetPath(sprites[j].texture);
-                    rv.Add(child);
+                    //Debug.Log("Packables in " + atlasPath);
+                    for (int j = 0; j < packables.Length; ++j)
+                    {
+                        var pack = packables[j];
+                        //Debug.Log(pack);
+                        var path = AssetDatabase.GetAssetPath(pack);
+                        if (System.IO.Directory.Exists(path))
+                        {
+                            var subs = PlatDependant.GetAllFiles(path);
+                            if (subs != null)
+                            {
+                                for (int i = 0; i < subs.Length; ++i)
+                                {
+                                    var sub = subs[i].Replace('\\', '/');
+                                    if (AssetDatabase.LoadAssetAtPath<Texture>(sub))
+                                    {
+                                        rv.Add(sub);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            rv.Add(path);
+                        }
+                    }
                 }
             }
+            //Debug.Log("Sprites in " + atlasPath);
+            //for (int i = 0; i < rv.Count; ++i)
+            //{
+            //    Debug.Log(rv[i]);
+            //}
             return rv.ToArray();
         }
 
