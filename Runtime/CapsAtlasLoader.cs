@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.U2D;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,54 +13,78 @@ namespace Capstones.UnityEngineEx
 {
     public static class CapsAtlasLoader
     {
-        // TODO: 这个延迟加载是因为，如果启动场景就用到了atlas，那么在Reg的时候会直接崩溃。
-        // 现在改成了延迟一帧生效。这个BUG在2019.2.3f1中存在。需要确定后续版本如果没问题后，使用版本宏将这部分代码关闭。
-        private static Queue<string> _LateLoadQueue = new Queue<string>();
-        private static Action<UnityEngine.U2D.SpriteAtlas> _RegFunc;
-        private static bool _Started;
+        // In current version of UGUI, the Image.RebuildImage will crash when the image's active sprite is set to null before the atlas is loaded.
+        // So we get this list using reflection, and do the filter by ourselves.
+        private static List<Image> TrackedImages;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void OnUnityStart()
         {
+            TrackedImages = typeof(Image).GetField("m_TrackedTexturelessImages", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null) as List<Image>;
+
             if (ResManager.ResLoader is ResManager.ClientResLoader)
             {
-                UnityEngine.U2D.SpriteAtlasManager.atlasRequested += (name, funcReg) =>
+                SpriteAtlasManager.atlasRequested += (name, funcReg) =>
                 {
-                    if (!_Started)
-                    {
-                        _LateLoadQueue.Enqueue(name);
-                        _RegFunc = funcReg;
-                        return;
-                    }
-
-                    var atlas = ResManager.LoadRes("atlas/" + name, typeof(UnityEngine.U2D.SpriteAtlas)) as UnityEngine.U2D.SpriteAtlas;
+                    var atlas = ResManager.LoadRes("atlas/" + name, typeof(SpriteAtlas)) as SpriteAtlas;
                     if (atlas)
                     {
+                        var sprites = Resources.FindObjectsOfTypeAll<Sprite>();
+                        for (int i = 0; i < sprites.Length; ++i)
+                        {
+                            var sprite = sprites[i];
+                            if (!sprite.texture)
+                            {
+                                if (atlas.CanBindTo(sprite))
+                                {
+                                    _LifetimeHolder.Add(new Pack<WeakReference, SpriteAtlas, string>(new WeakReference(sprite), atlas, sprite.name));
+                                }
+                            }
+                        }
+
+                        if (!_LifetimeChecking)
+                        {
+                            CoroutineRunner.StartCoroutine(CheckLifetimeWork());
+                        }
+
+                        for (var i = TrackedImages.Count - 1; i >= 0; --i)
+                        {
+                            var g = TrackedImages[i];
+                            if (!(g.overrideSprite != null ? g.overrideSprite : g.sprite))
+                            {
+                                TrackedImages.RemoveAt(i);
+                            }
+                        }
                         funcReg(atlas);
                     }
                 };
-                CoroutineRunner.StartCoroutine(LateLoadWork());
             }
         }
 
-        private static IEnumerator LateLoadWork()
+        private static bool _LifetimeChecking = false;
+        private static List<Pack<WeakReference, SpriteAtlas, string>> _LifetimeHolder = new List<Pack<WeakReference, SpriteAtlas, string>>();
+        private static IEnumerator CheckLifetimeWork()
         {
+            _LifetimeChecking = true;
             try
             {
-                yield return null;
+                while (true)
+                {
+                    for (var i = _LifetimeHolder.Count - 1; i >= 0; --i)
+                    {
+                        var item = _LifetimeHolder[i];
+                        if (!item.t1.GetWeakReference<Texture>())
+                        {
+                            PlatDependant.LogError($"Atlas of Sprite {item.t3} need to be unloaded.");
+                            _LifetimeHolder.RemoveAt(i);
+                        }
+                    }
+                    yield return null;
+                }
             }
             finally
-            { // using finally is that the coroutine runner may be destroyed when some component starts.
-                _Started = true;
-                foreach (var name in _LateLoadQueue)
-                {
-                    var atlas = ResManager.LoadRes("atlas/" + name, typeof(UnityEngine.U2D.SpriteAtlas)) as UnityEngine.U2D.SpriteAtlas;
-                    if (atlas)
-                    {
-                        _RegFunc(atlas);
-                    }
-                }
-                _LateLoadQueue.Clear();
+            {
+                _LifetimeChecking = false;
             }
         }
     }
