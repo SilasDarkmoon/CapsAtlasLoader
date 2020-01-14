@@ -355,33 +355,36 @@ namespace Capstones.UnityEditorEx
                                 var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(atlaspath);
                                 if (atlas)
                                 {
-                                    UnityEditor.U2D.SpriteAtlasExtensions.SetIncludeInBuild(atlas, false);
-                                    UnityEditor.U2D.SpriteAtlasExtensions.SetPackingSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetPackingSettings(template));
-                                    UnityEditor.U2D.SpriteAtlasExtensions.SetTextureSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetTextureSettings(template));
-
-                                    UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(template, "DefaultTexturePlatform"));
-                                    var buildTargetNames = Enum.GetNames(typeof(BuildTargetGroup));
-                                    for (int j = 0; j < buildTargetNames.Length; ++j)
+                                    if (!atlas.isVariant)
                                     {
-                                        var platsettings = UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(template, buildTargetNames[j]);
-                                        if (platsettings != null && platsettings.overridden)
-                                        {
-                                            UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, platsettings);
+                                        UnityEditor.U2D.SpriteAtlasExtensions.SetIncludeInBuild(atlas, false);
+                                        UnityEditor.U2D.SpriteAtlasExtensions.SetPackingSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetPackingSettings(template));
+                                        UnityEditor.U2D.SpriteAtlasExtensions.SetTextureSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetTextureSettings(template));
 
-                                            BuildTargetGroup bgroup;
-                                            Enum.TryParse(buildTargetNames[j], out bgroup);
-                                            for (int k = 0; k < buildTargetNames.Length; ++k)
+                                        UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(template, "DefaultTexturePlatform"));
+                                        var buildTargetNames = Enum.GetNames(typeof(BuildTargetGroup));
+                                        for (int j = 0; j < buildTargetNames.Length; ++j)
+                                        {
+                                            var platsettings = UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(template, buildTargetNames[j]);
+                                            if (platsettings != null && platsettings.overridden)
                                             {
-                                                BuildTargetGroup bgroupcur;
-                                                Enum.TryParse(buildTargetNames[k], out bgroupcur);
-                                                if (bgroup == bgroupcur)
+                                                UnityEditor.U2D.SpriteAtlasExtensions.SetPlatformSettings(atlas, platsettings);
+
+                                                BuildTargetGroup bgroup;
+                                                Enum.TryParse(buildTargetNames[j], out bgroup);
+                                                for (int k = 0; k < buildTargetNames.Length; ++k)
                                                 {
-                                                    BuildTarget btar;
-                                                    if (Enum.TryParse(buildTargetNames[k], out btar))
+                                                    BuildTargetGroup bgroupcur;
+                                                    Enum.TryParse(buildTargetNames[k], out bgroupcur);
+                                                    if (bgroup == bgroupcur)
                                                     {
-                                                        Debug.LogFormat("Now packing {0} on {1}.", atlas.name, btar);
-                                                        UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, btar, false);
-                                                        Debug.LogFormat("Packing done {0} on {1}.", atlas.name, btar);
+                                                        BuildTarget btar;
+                                                        if (Enum.TryParse(buildTargetNames[k], out btar))
+                                                        {
+                                                            Debug.LogFormat("Now packing {0} on {1}.", atlas.name, btar);
+                                                            UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, btar, false);
+                                                            Debug.LogFormat("Packing done {0} on {1}.", atlas.name, btar);
+                                                        }
                                                     }
                                                 }
                                             }
@@ -411,8 +414,42 @@ namespace Capstones.UnityEditorEx
         {
             SetCurrentAtlasProperties("High");
         }
+        [MenuItem("Atlas/Rename Atlas", priority = 100030)]
+        public static void RenameCurrentAtlas()
+        {
+            var selections = Selection.assetGUIDs;
+            if (selections != null)
+            {
+                for (int i = 0; i < selections.Length; ++i)
+                {
+                    var sel = selections[i];
+                    var atlaspath = AssetDatabase.GUIDToAssetPath(sel);
+                    if (atlaspath != null)
+                    {
+                        var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(atlaspath);
+                        if (!atlas.isVariant)
+                        {
+                            RenameAtlasName(atlaspath);
+                        }
+                    }
+                }
+                for (int i = 0; i < selections.Length; ++i)
+                {
+                    var sel = selections[i];
+                    var atlaspath = AssetDatabase.GUIDToAssetPath(sel);
+                    if (atlaspath != null)
+                    {
+                        var atlas = AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(atlaspath);
+                        if (atlas.isVariant)
+                        {
+                            RenameAtlasName(atlaspath);
+                        }
+                    }
+                }
+            }
+        }
 
-        [MenuItem("Atlas/Create Atlas Variant", priority = 100030)]
+        [MenuItem("Atlas/Create Atlas Variant", priority = 100040)]
         public static void CreateAtlasVariant()
         {
             var guids = Selection.assetGUIDs;
@@ -451,6 +488,30 @@ namespace Capstones.UnityEditorEx
                             vatlas.SetVariantScale(0.5f);
                             vatlas.SetIncludeInBuild(false);
                             AssetDatabase.CreateAsset(vatlas, path);
+                        }
+                    }
+                }
+            }
+        }
+        [MenuItem("Atlas/Move Master Atlas Back", priority = 100050)]
+        public static void MoveBackMasterAtlas()
+        {
+            var guids = Selection.assetGUIDs;
+            if (guids != null)
+            {
+                for (int i = 0; i < guids.Length; ++i)
+                {
+                    var guid = guids[i];
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (path.EndsWith(".spriteatlas"))
+                    {
+                        var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
+                        if (atlas && atlas.isVariant)
+                        {
+                            var master = new SerializedObject(atlas).FindProperty("m_MasterAtlas").objectReferenceValue as SpriteAtlas;
+                            var masterpath = AssetDatabase.GetAssetPath(master);
+                            AssetDatabase.DeleteAsset(path);
+                            AssetDatabase.MoveAsset(masterpath, path);
                         }
                     }
                 }
@@ -710,33 +771,52 @@ namespace Capstones.UnityEditorEx
 
         private static void RenameAtlasName(string atlaspath)
         {
-            string type;
-            string mod;
-            string dist;
-            string folder = Path.GetDirectoryName(atlaspath);
-            string ret = ResManager.GetAssetNormPath(folder, out type, out mod, out dist);
-
-            StringBuilder sb = new StringBuilder();
-            sb.Append("m").Append("-").Append(mod.ToLower()).Append("-").Append("d").Append("-").Append(dist.ToLower()).Append("-");
-            sb.Append(ret.Replace('/', '-')).Append("-");
-            string newNamePre = sb.ToString().ToLower();
-            if (atlaspath.Contains(newNamePre))
+            var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlaspath);
+            if (!atlas)
             {
                 return;
             }
-            
-            int subIndex = 0;
-            while (true)
+            if (atlas.isVariant)
             {
-                ++subIndex;
-                bool isExists = File.Exists(folder + '/' + newNamePre + subIndex + ".spriteatlas");
-                if (!isExists)
+                var master = new SerializedObject(atlas).FindProperty("m_MasterAtlas").objectReferenceValue as SpriteAtlas;
+                var tag = master.tag;
+                var currentname = Path.GetFileNameWithoutExtension(atlaspath);
+                if (currentname == tag)
                 {
-                    break;
+                    return;
                 }
+                AssetDatabase.RenameAsset(atlaspath, tag + ".spriteatlas");
             }
-            string newName = newNamePre + subIndex + ".spriteatlas";
-            AssetDatabase.RenameAsset(atlaspath, newName);
+            else
+            {
+                string type;
+                string mod;
+                string dist;
+                string folder = Path.GetDirectoryName(atlaspath);
+                string ret = ResManager.GetAssetNormPath(folder, out type, out mod, out dist);
+
+                StringBuilder sb = new StringBuilder();
+                //sb.Append("m").Append("-").Append(mod.ToLower()).Append("-").Append("d").Append("-").Append(dist.ToLower()).Append("-");
+                sb.Append(ret.Replace('/', '-')).Append("-");
+                string newNamePre = sb.ToString().ToLower();
+                if (Path.GetFileNameWithoutExtension(atlaspath).StartsWith(newNamePre))
+                {
+                    return;
+                }
+
+                int subIndex = 0;
+                while (true)
+                {
+                    ++subIndex;
+                    bool isExists = _CachedAtlas.ContainsKey(newNamePre + subIndex);
+                    if (!isExists)
+                    {
+                        break;
+                    }
+                }
+                string newName = newNamePre + subIndex + ".spriteatlas";
+                AssetDatabase.RenameAsset(atlaspath, newName);
+            }
         }
 
         private static void DoAssetReimport(string path, ImportAssetOptions options)
