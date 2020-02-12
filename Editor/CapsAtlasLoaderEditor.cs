@@ -710,7 +710,8 @@ namespace Capstones.UnityEditorEx
                         var joc = jo["atlas"] as JSONObject;
                         if (joc != null && joc.type == JSONObject.Type.ARRAY)
                         {
-                            for (int i = 0; i < joc.list.Count; ++i)
+                            int size = joc.list.Count;
+                            for (int i = 0; i < size; ++i)
                             {
                                 var val = joc.list[i].str;
                                 SaveSpriteGUID(val);
@@ -729,21 +730,12 @@ namespace Capstones.UnityEditorEx
             if (sa != null)
             {
                 string atlasName = Path.GetFileNameWithoutExtension(atlasPath);
-                string[] list = atlasName.Split('-');
-                int size = list.Length;
-                if (size < 3)
-                {
-                    return;
-                }
-                StringBuilder sb = new StringBuilder();
-                sb.Append(list[size - 4]).Append('-').Append(list[size - 3]).Append('-').Append(list[size - 1]);
-                string shortName = sb.ToString();
                 var subs = GetPackedPathsInAtlas(atlasPath);
                 for (int i = 0; i < subs.Length; ++i)
                 {
                     string spPath = subs[i];
                     string guid = AssetDatabase.AssetPathToGUID(spPath);
-                    _CachedAtlasSpriteGUID[guid] = shortName;
+                    _CachedAtlasSpriteGUID[guid] = atlasName;
                     _CachedAtlasPath[guid] = atlasPath;
                 }
             }
