@@ -665,7 +665,10 @@ namespace Capstones.UnityEditorEx
                     if (tex && (path.EndsWith(".png") ||
                         path.EndsWith(".jpg") ||
                         path.EndsWith(".tga") ||
-                        path.EndsWith(".psd")))
+                        path.EndsWith(".psd") ||
+                        path.EndsWith(".bmp") ||
+                        path.EndsWith(".tif") ||
+                        path.EndsWith(".gif")))
                     {
                         TextureImporter texImporter = TextureImporter.GetAtPath(path) as TextureImporter;
 
