@@ -10,17 +10,28 @@ namespace Capstones.UnityEditorEx
 {
     public class CapsAtlasLoaderResBuilder : CapsResBuilder.IResBuilderEx
     {
+        private class SpriteInAtlasInfo
+        {
+            public string SpriteFile;
+            public string AtlasName;
+            public string SpriteMD5;
+        }
+
         private string _Output;
-        private readonly Dictionary<string, string> _OldMap = new Dictionary<string, string>();
-        private readonly Dictionary<string, string> _NewMap = new Dictionary<string, string>();
-        private readonly HashSet<string> _FullSet = new HashSet<string>();
+        private readonly Dictionary<string, SpriteInAtlasInfo> _OldMap = new Dictionary<string, SpriteInAtlasInfo>();
+        private readonly Dictionary<string, SpriteInAtlasInfo> _NewMap = new Dictionary<string, SpriteInAtlasInfo>();
+        private readonly HashSet<string> _SpriteSet = new HashSet<string>();
+        private readonly HashSet<string> _AtlasSet = new HashSet<string>();
+        private readonly HashSet<string> _AtlasAssetSet = new HashSet<string>();
 
         public void Prepare(string output)
         {
             _Output = output;
             _OldMap.Clear();
             _NewMap.Clear();
-            _FullSet.Clear();
+            _SpriteSet.Clear();
+            _AtlasSet.Clear();
+            _AtlasAssetSet.Clear();
 
             if (!string.IsNullOrEmpty(output))
             {
@@ -41,8 +52,30 @@ namespace Capstones.UnityEditorEx
                             for (int i = 0; i < joc.list.Count; ++i)
                             {
                                 var key = joc.keys[i];
-                                var val = joc.list[i].str;
-                                _OldMap[key] = val;
+                                var jinfo = joc.list[i];
+                                if (jinfo.type == JSONObject.Type.STRING)
+                                {
+                                    var val = joc.list[i].str;
+                                    _OldMap[key] = new SpriteInAtlasInfo() { SpriteFile = key, AtlasName = val, SpriteMD5 = null };
+                                }
+                                else if (jinfo.type == JSONObject.Type.OBJECT)
+                                {
+                                    var atlas = jinfo["atlas"];
+                                    if (atlas != null)
+                                    {
+                                        if (atlas.type == JSONObject.Type.STRING)
+                                        {
+                                            var val = atlas.str;
+                                            string md5 = null;
+                                            var md5node = jinfo["md5"];
+                                            if (md5node != null && md5node.type == JSONObject.Type.STRING)
+                                            {
+                                                md5 = md5node.str;
+                                            }
+                                            _OldMap[key] = new SpriteInAtlasInfo() { SpriteFile = key, AtlasName = val, SpriteMD5 = md5 };
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -70,7 +103,8 @@ namespace Capstones.UnityEditorEx
                                     var path = packed[j];
                                     if (!string.IsNullOrEmpty(path))
                                     {
-                                        _NewMap[path] = name;
+                                        var md5 = CapsEditorUtils.GetFileMD5(path) + "-" + CapsEditorUtils.GetFileLength(path);
+                                        _NewMap[path] = new SpriteInAtlasInfo() { SpriteFile = path, AtlasName = name, SpriteMD5 = md5 };
                                     }
                                 }
                             }
@@ -82,19 +116,29 @@ namespace Capstones.UnityEditorEx
             foreach (var kvp in _OldMap)
             {
                 var key = kvp.Key;
-                var val = kvp.Value;
-                if (!_NewMap.ContainsKey(key) || _NewMap[key] != val)
+                var oldinfo = kvp.Value;
+                SpriteInAtlasInfo newinfo;
+                if (!_NewMap.TryGetValue(key, out newinfo) || newinfo.AtlasName != oldinfo.AtlasName)
                 {
-                    _FullSet.Add(key);
+                    _SpriteSet.Add(key);
+                }
+                else if (newinfo.SpriteMD5 != oldinfo.SpriteMD5)
+                {
+                    _AtlasSet.Add(newinfo.AtlasName);
                 }
             }
             foreach (var kvp in _NewMap)
             {
                 var key = kvp.Key;
-                var val = kvp.Value;
-                if (!_OldMap.ContainsKey(key) || _OldMap[key] != val)
+                var newinfo = kvp.Value;
+                SpriteInAtlasInfo oldinfo;
+                if (!_OldMap.TryGetValue(key, out oldinfo) || newinfo.AtlasName != oldinfo.AtlasName)
                 {
-                    _FullSet.Add(key);
+                    _SpriteSet.Add(key);
+                }
+                else if (newinfo.SpriteMD5 != oldinfo.SpriteMD5)
+                {
+                    _AtlasSet.Add(newinfo.AtlasName);
                 }
             }
         }
@@ -104,8 +148,19 @@ namespace Capstones.UnityEditorEx
         public void OnSuccess()
         {
             var jo = new JSONObject(JSONObject.Type.OBJECT);
-            var joc = new JSONObject(_NewMap);
+            var joc = new JSONObject(JSONObject.Type.OBJECT);
             jo["tex"] = joc;
+
+            foreach (var kvp in _NewMap)
+            {
+                var key = kvp.Key;
+                var info = kvp.Value;
+                var jot = new JSONObject(JSONObject.Type.OBJECT);
+                joc[key] = jot;
+
+                jot["atlas"] = new JSONObject(JSONObject.Type.STRING) { str = info.AtlasName };
+                jot["md5"] = new JSONObject(JSONObject.Type.STRING) { str = info.SpriteMD5 };
+            }
 
             var cachefile = _Output + "/res/inatlas.txt";
             using (var sw = PlatDependant.OpenWriteText(cachefile))
@@ -140,6 +195,10 @@ namespace Capstones.UnityEditorEx
                         Norm = norm,
                         AtlasName = atlas.tag,
                     };
+                    if (_AtlasSet.Contains(atlas.tag))
+                    {
+                        _AtlasAssetSet.Add(asset);
+                    }
                 }
             }
             return null;
@@ -198,7 +257,7 @@ namespace Capstones.UnityEditorEx
                 for (int i = 0; i < assets.Count; ++i)
                 {
                     var asset = assets[i];
-                    if (_FullSet.Contains(asset))
+                    if (_SpriteSet.Contains(asset) || _AtlasAssetSet.Contains(asset))
                     {
                         modwork.ForceRefreshABs.Add(abindex);
                         break;
