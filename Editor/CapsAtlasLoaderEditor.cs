@@ -518,16 +518,6 @@ namespace Capstones.UnityEditorEx
             }
         }
 
-        //public static List<string> GetAssetsInFolder<T>(string folder, bool recursive = true) where T : Object
-        //{
-        //    List<string> rv = new List<string>();
-        //    if (AssetDatabase.IsValidFolder(folder))
-        //    {
-        //        AssetDatabase.FindAssets()
-        //    }
-        //    return rv;
-        //}
-
         public static string[] GetPackedPathsInAtlas(string atlasPath)
         {
             List<string> rv = new List<string>();
@@ -572,45 +562,6 @@ namespace Capstones.UnityEditorEx
             //}
             return rv.ToArray();
         }
-
-        //[MenuItem("Atlas/Show Sprites In Atlas", priority = 100040)]
-        //private static void ShowSpritesInAtlas()
-        //{
-        //    if (Selection.assetGUIDs != null)
-        //    {
-        //        for (int i = 0; i < Selection.assetGUIDs.Length; ++i)
-        //        {
-        //            var guid = Selection.assetGUIDs[i];
-        //            var path = AssetDatabase.GUIDToAssetPath(guid);
-        //            var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
-        //            if (atlas)
-        //            {
-        //                Debug.Log("Packables in " + path);
-        //                var packables = atlas.GetPackables();
-        //                for (int j = 0; j < packables.Length; ++j)
-        //                {
-        //                    var child = AssetDatabase.GetAssetPath(packables[j]);
-        //                    if (AssetDatabase.IsValidFolder(child))
-        //                    {
-        //                        Debug.Log("(Folder) " + child);
-        //                    }
-        //                    else
-        //                    {
-        //                        Debug.Log(child);
-        //                    }
-        //                }
-        //                Debug.Log("Sprites in " + path);
-        //                var sprites = new Sprite[atlas.spriteCount];
-        //                atlas.GetSprites(sprites);
-        //                for (int j = 0; j < sprites.Length; ++j)
-        //                {
-        //                    var child = AssetDatabase.GetAssetPath(sprites[j].texture);
-        //                    Debug.Log(child);
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
 
         [MenuItem("Atlas/Show Sprite In Which Atlas", priority = 100110)]
         private static void ShowSpriteWhichAtlas()
@@ -691,6 +642,49 @@ namespace Capstones.UnityEditorEx
 
                 EditorUtility.ClearProgressBar();
                 EditorUtility.DisplayDialog("成功", "处理完成！", "好的");
+            }
+        }
+
+        [MenuItem("Atlas/Change ETC1 TO ETC2", priority = 100611)]
+        public static void Change2ETC2()
+        {
+            if (PlatDependant.IsFileExist("EditorOutput/Runtime/atlas.txt"))
+            {
+                string json = "";
+                using (var sr = PlatDependant.OpenReadText("EditorOutput/Runtime/atlas.txt"))
+                {
+                    json = sr.ReadToEnd();
+                }
+                try
+                {
+                    var jo = new JSONObject(json);
+                    try
+                    {
+                        var joc = jo["atlas"] as JSONObject;
+                        if (joc != null && joc.type == JSONObject.Type.ARRAY)
+                        {
+                            int size = joc.list.Count;
+                            for (int i = 0; i < size; ++i)
+                            {
+                                var atlaspath = joc.list[i].str;
+                                EditorUtility.DisplayProgressBar("===设置中===", atlaspath, i / size);
+                                var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlaspath);
+                                TextureImporterPlatformSettings tips = SpriteAtlasExtensions.GetPlatformSettings(atlas, "Android");
+                                if (tips.format == TextureImporterFormat.ETC_RGB4)
+                                {
+                                    tips.format = TextureImporterFormat.ETC2_RGBA8Crunched;
+                                    SpriteAtlasExtensions.SetPlatformSettings(atlas, tips);
+                                    SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, BuildTarget.Android, false);
+                                }
+                            }
+
+                            EditorUtility.ClearProgressBar();
+                            EditorUtility.DisplayDialog("成功", "处理完成！", "好的");
+                        }
+                    }
+                    catch { }
+                }
+                catch { }
             }
         }
 
