@@ -10,6 +10,7 @@ namespace Capstones.UnityEditorEx
 {
     public class CapsAtlasLoaderResBuilder : CapsResBuilder.IResBuilderEx
     {
+        public const int CapsResManifestItemType_Atlas = 5;
         private class SpriteInAtlasInfo
         {
             public string SpriteFile;
@@ -239,6 +240,8 @@ namespace Capstones.UnityEditorEx
                 {
                     rootpath = rootpath + "dist/" + dist + "/atlas/";
                 }
+
+                item.Type = CapsResManifestItemType_Atlas;
 
                 var newpath = rootpath + _Building.AtlasName;
                 CapsResManifestNode newnode = item.Manifest.AddOrGetItem(newpath);
