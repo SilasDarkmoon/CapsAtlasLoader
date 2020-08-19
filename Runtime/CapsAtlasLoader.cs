@@ -56,32 +56,6 @@ namespace Capstones.UnityEngineEx
                 return new AssetInfo_Atlas() { ManiItem = item };
             }
 
-            //protected List<SpriteAtlas> _LoadedAtlas = new List<SpriteAtlas>();
-            protected Dictionary<Sprite, SpriteAtlas> _SpriteAtlasMap = new Dictionary<Sprite, SpriteAtlas>();
-            public void PreUnloadUnusedRes()
-            {
-                var atlases = Resources.FindObjectsOfTypeAll<SpriteAtlas>();
-                var sprites = Resources.FindObjectsOfTypeAll<Sprite>();
-                for (int i = 0; i < atlases.Length; ++i)
-                {
-                    var atlas = atlases[i];
-                    //_LoadedAtlas.Add(atlas);
-                    for (int j = 0; j < sprites.Length; ++j)
-                    {
-                        var sprite = sprites[j];
-                        if (atlas.CanBindTo(sprite))
-                        {
-                            //sprite.SetAttachment(atlas);
-                            _SpriteAtlasMap[sprite] = atlas;
-                        }
-                    }
-                }
-            }
-            public void PostUnloadUnusedRes()
-            {
-                _SpriteAtlasMap.Clear();
-                //_LoadedAtlas.Clear();
-            }
             public bool LoadAssetBundle(string mod, string name, bool isContainingBundle, out ResManager.AssetBundleInfo bi)
             {
                 bi = null;
@@ -108,7 +82,7 @@ namespace Capstones.UnityEngineEx
         }
 
         private static Action<SpriteAtlas> _AtlasRegFunc;
-        //private static List<SpriteAtlas> _LoadedAtlas = new List<SpriteAtlas>();
+        private static List<SpriteAtlas> _LoadedAtlas = new List<SpriteAtlas>();
         public static void LoadAtlas(string name, Action<SpriteAtlas> funcReg)
         {
             _AtlasRegFunc = funcReg;
