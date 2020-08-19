@@ -33,14 +33,32 @@ namespace Capstones.UnityEngineEx
             {
                 if (DepBundles.Count > 0)
                 {
-                    var bi = DepBundles[DepBundles.Count - 1];
-                    if (bi != null)
+                    //var bi = DepBundles[DepBundles.Count - 1];
+                    //if (bi != null)
+                    //{
+                    //    bi.LeaveAssetOpen = true;
+                    //}
+                    var aname = ManiItem.Node.PPath;
+                    if (aname.EndsWith(".spriteatlas"))
                     {
-                        bi.LeaveAssetOpen = true;
+                        aname = aname.Substring(0, aname.Length - ".spriteatlas".Length);
+                    }
+                    for (int i = DepBundles.Count - 2; i >= 0; --i)
+                    {
+                        var dep = DepBundles[i];
+                        HashSet<string> depatlases;
+                        if (!_AssetBundleAtlasDepInfos.TryGetValue(dep.RealName, out depatlases))
+                        {
+                            depatlases = new HashSet<string>();
+                            _AssetBundleAtlasDepInfos[dep.RealName] = depatlases;
+                        }
+                        depatlases.Add(aname);
                     }
                 }
             }
         }
+
+        private static Dictionary<string, HashSet<string>> _AssetBundleAtlasDepInfos = new Dictionary<string, HashSet<string>>();
 
         public class TypedResLoader_Atlas : UnityEngineEx.ResManager.ClientResLoader.TypedResLoader_Normal, ResManager.IAssetBundleLoaderEx
         {
@@ -56,8 +74,27 @@ namespace Capstones.UnityEngineEx
                 return new AssetInfo_Atlas() { ManiItem = item };
             }
 
+            protected HashSet<string> _LoadingAtlasForABs = new HashSet<string>();
             public bool LoadAssetBundle(string mod, string name, bool isContainingBundle, out ResManager.AssetBundleInfo bi)
             {
+                var abname = name;
+                if (!string.IsNullOrEmpty(mod))
+                {
+                    abname = "mod/" + mod + "/" + name;
+                }
+                HashSet<string> depatlases;
+                if (_AssetBundleAtlasDepInfos.TryGetValue(abname, out depatlases))
+                {
+                    if (_LoadingAtlasForABs.Add(abname))
+                    {
+                        foreach (var aname in depatlases)
+                        {
+                            LoadAtlas(aname, _AtlasRegFunc);
+                        }
+                        _LoadingAtlasForABs.Remove(abname); // avoid stack overflow.
+                    }
+                }
+
                 bi = null;
                 return false;
             }
@@ -82,14 +119,12 @@ namespace Capstones.UnityEngineEx
         }
 
         private static Action<SpriteAtlas> _AtlasRegFunc;
-        private static List<SpriteAtlas> _LoadedAtlas = new List<SpriteAtlas>();
         public static void LoadAtlas(string name, Action<SpriteAtlas> funcReg)
         {
             _AtlasRegFunc = funcReg;
             var atlas = ResManager.LoadRes("atlas/" + name, typeof(SpriteAtlas)) as SpriteAtlas;
             if (atlas)
             {
-                //_LoadedAtlas.Add(atlas);
                 for (var i = TrackedImages.Count - 1; i >= 0; --i)
                 {
                     var g = TrackedImages[i];
