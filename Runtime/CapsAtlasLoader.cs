@@ -1,15 +1,12 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 using UnityEngine.U2D;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 using Object = UnityEngine.Object;
 using Capstones.UnityEngineEx.CoroutineTasks;
-using Capstones.WeakAttachments;
 
 namespace Capstones.UnityEngineEx
 {
@@ -20,15 +17,19 @@ namespace Capstones.UnityEngineEx
         {
             protected override Object LoadMainAsset()
             {
+#if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
                 RegReferenceFromSprite();
+#endif
                 return base.LoadMainAsset();
             }
             protected override IEnumerator LoadMainAssetAsync(CoroutineWork req)
             {
+#if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
                 RegReferenceFromSprite();
+#endif
                 return base.LoadMainAssetAsync(req);
             }
-
+#if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
             public void RegReferenceFromSprite()
             {
                 if (DepBundles.Count > 0)
@@ -56,16 +57,22 @@ namespace Capstones.UnityEngineEx
                     }
                 }
             }
+#endif
         }
-
+#if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
         private static Dictionary<string, HashSet<string>> _AssetBundleAtlasDepInfos = new Dictionary<string, HashSet<string>>();
-
-        public class TypedResLoader_Atlas : UnityEngineEx.ResManager.ClientResLoader.TypedResLoader_Normal, ResManager.IAssetBundleLoaderEx
+#endif
+        public class TypedResLoader_Atlas : UnityEngineEx.ResManager.ClientResLoader.TypedResLoader_Normal
+#if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
+            , ResManager.IAssetBundleLoaderEx
+#endif
         {
+#if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
             public TypedResLoader_Atlas()
             {
                 ResManager.AssetBundleLoaderEx.Add(this);
             }
+#endif
 
             public override int ResItemType { get { return CapsResManifestItemType_Atlas; } }
 
@@ -73,7 +80,7 @@ namespace Capstones.UnityEngineEx
             {
                 return new AssetInfo_Atlas() { ManiItem = item };
             }
-
+#if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
             protected HashSet<string> _LoadingAtlasForABs = new HashSet<string>();
             public bool LoadAssetBundle(string mod, string name, bool isContainingBundle, out ResManager.AssetBundleInfo bi)
             {
@@ -98,18 +105,21 @@ namespace Capstones.UnityEngineEx
                 bi = null;
                 return false;
             }
+#endif
         }
         public static TypedResLoader_Atlas Instance_TypedResLoader_Atlas = new TypedResLoader_Atlas();
 
+#if FIX_LOAD_ATLAS_CRASH_ON_DISPOSED_SPRITE
         // In current version of UGUI, the Image.RebuildImage will crash when the image's active sprite is set to null before the atlas is loaded.
         // So we get this list using reflection, and do the filter by ourselves.
         private static List<Image> TrackedImages;
-
+#endif
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void OnUnityStart()
         {
+#if FIX_LOAD_ATLAS_CRASH_ON_DISPOSED_SPRITE
             TrackedImages = typeof(Image).GetField("m_TrackedTexturelessImages", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null) as List<Image>;
-
+#endif
             if (ResManager.ResLoader is ResManager.ClientResLoader)
             {
                 // TODO: when we change the ResLoader dynamically (from EditorResLoader to ClientResLoader), we should call this again.
@@ -118,13 +128,18 @@ namespace Capstones.UnityEngineEx
             }
         }
 
+#if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
         private static Action<SpriteAtlas> _AtlasRegFunc;
+#endif
         public static void LoadAtlas(string name, Action<SpriteAtlas> funcReg)
         {
+#if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
             _AtlasRegFunc = funcReg;
+#endif
             var atlas = ResManager.LoadRes("atlas/" + name, typeof(SpriteAtlas)) as SpriteAtlas;
             if (atlas)
             {
+#if FIX_LOAD_ATLAS_CRASH_ON_DISPOSED_SPRITE
                 for (var i = TrackedImages.Count - 1; i >= 0; --i)
                 {
                     var g = TrackedImages[i];
@@ -134,6 +149,7 @@ namespace Capstones.UnityEngineEx
                         TrackedImages.RemoveAt(i);
                     }
                 }
+#endif
                 funcReg(atlas);
             }
         }
