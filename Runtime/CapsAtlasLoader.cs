@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿#if !UNITY_2019_4_OR_NEWER || UNITY_2019_4_0 || UNITY_2019_4_1 || UNITY_2019_4_2 || UNITY_2019_4_3 || UNITY_2019_4_4 || UNITY_2019_4_5 || UNITY_2019_4_6 || UNITY_2019_4_7 || UNITY_2019_4_8
+#define FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
+#endif
+
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.U2D;
 using System;
