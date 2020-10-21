@@ -606,6 +606,10 @@ namespace Capstones.UnityEditorEx
             int size = assets.Length;
             if (assets != null && size > 0)
             {
+                var tmpPath = CapsModEditor.FindAssetInMods("TextureTemplate.png");
+                var textureTmpImporter = TextureImporter.GetAtPath(tmpPath) as TextureImporter;
+                TextureImporterPlatformSettings androidTmpSettings = textureTmpImporter.GetPlatformTextureSettings("Android");
+                TextureImporterPlatformSettings iosTmpSettings = textureTmpImporter.GetPlatformTextureSettings("iOS");
                 for (int i = 0; i < size; i++)
                 {
                     
@@ -626,13 +630,15 @@ namespace Capstones.UnityEditorEx
                         TextureImporterPlatformSettings androidSettings = texImporter.GetPlatformTextureSettings("Android");
                         androidSettings.overridden = true;
                         androidSettings.maxTextureSize = 512;
-                        androidSettings.format = TextureImporterFormat.ETC2_RGBA8Crunched;
+                        androidSettings.format = androidTmpSettings.format;
+                        androidSettings.compressionQuality = androidTmpSettings.compressionQuality;
                         texImporter.SetPlatformTextureSettings(androidSettings);
 
                         TextureImporterPlatformSettings iosSettings = texImporter.GetPlatformTextureSettings("iOS");
                         iosSettings.overridden = true;
                         iosSettings.maxTextureSize = 512;
-                        iosSettings.format = TextureImporterFormat.ASTC_8x8;
+                        iosSettings.format = iosTmpSettings.format;
+                        iosSettings.compressionQuality = iosTmpSettings.compressionQuality;
                         texImporter.SetPlatformTextureSettings(iosSettings);
 
                         AssetDatabase.SaveAssets();
