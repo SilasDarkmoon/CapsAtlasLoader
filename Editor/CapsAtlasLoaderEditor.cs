@@ -632,7 +632,7 @@ namespace Capstones.UnityEditorEx
                         TextureImporterPlatformSettings iosSettings = texImporter.GetPlatformTextureSettings("iOS");
                         iosSettings.overridden = true;
                         iosSettings.maxTextureSize = 512;
-                        iosSettings.format = TextureImporterFormat.ASTC_6x6;
+                        iosSettings.format = TextureImporterFormat.ASTC_8x8;
                         texImporter.SetPlatformTextureSettings(iosSettings);
 
                         AssetDatabase.SaveAssets();
