@@ -599,6 +599,78 @@ namespace Capstones.UnityEditorEx
             }
         }
 
+        [MenuItem("Atlas/Show Multi-Binded Sprites", priority = 100130)]
+        public static void ShowMultiBindedSprites()
+        {
+            Dictionary<string, string> sprite2atlas = new Dictionary<string, string>();
+            foreach (var kvp in _CachedAtlas)
+            {
+                var atlas = kvp.Value;
+                var loaded = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlas);
+                if (loaded)
+                {
+                    if (!loaded.isVariant)
+                    {
+                        var packed = GetPackedPathsInAtlas(atlas);
+                        foreach (var sprite in packed)
+                        {
+                            string existing;
+                            if (sprite2atlas.TryGetValue(sprite, out existing))
+                            {
+                                Debug.LogError(sprite + " is in multiple atlas: " + existing + " & " + atlas);
+                            }
+                            else
+                            {
+                                sprite2atlas[sprite] = atlas;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        [MenuItem("Atlas/Show SpriteAtlas with Same Tag", priority = 100140)]
+        public static void ShowSpriteAtlasNameConflict()
+        {
+            Dictionary<string, string> tag2path = new Dictionary<string, string>();
+            var allassets = AssetDatabase.GetAllAssetPaths();
+            for (int i = 0; i < allassets.Length; ++i)
+            {
+                var path = allassets[i];
+                if (path.EndsWith(".spriteatlas"))
+                {
+                    var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
+                    if (!atlas)
+                    {
+                        Debug.LogError("Failed to load " + path);
+                    }
+                    else
+                    {
+                        if (!atlas.isVariant)
+                        {
+                            var tag = atlas.tag;
+                            var consideredTag = Path.GetFileNameWithoutExtension(path);
+                            if (consideredTag.ToLower() != consideredTag)
+                            {
+                                Debug.LogError("Atlas with upper-case name: " + path);
+                            }
+                            if (consideredTag != tag)
+                            {
+                                Debug.LogError("Atlas tag differ from filename: " + path + ", tag: " + tag);
+                            }
+                            if (tag2path.ContainsKey(tag))
+                            {
+                                Debug.LogError("Atlas tag conflict: " + path + ", tag: " + tag + ", conflict: " + tag2path[tag]);
+                            }
+                            else
+                            {
+                                tag2path[tag] = path;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         [MenuItem("Atlas/SetTextureCompression", priority = 100610)]
         public static void SetTextureCompression()
         {
