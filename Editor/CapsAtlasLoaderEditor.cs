@@ -49,6 +49,17 @@ namespace Capstones.UnityEditorEx
                     }
                 }
             };
+            //UnityEngine.SceneManagement.SceneManager.sceneUnloaded += scene =>
+            //{
+            //    ResManager.EditorResLoader.UnloadAssets(Resources.FindObjectsOfTypeAll<Sprite>());
+            //};
+            EditorApplication.playModeStateChanged += e =>
+            {
+                if (e == PlayModeStateChange.EnteredPlayMode || e == PlayModeStateChange.EnteredEditMode)
+                {
+                    ResManager.EditorResLoader.UnloadAssets(Resources.FindObjectsOfTypeAll<Sprite>());
+                }
+            };
         }
 
         public static void LoadCachedAtlas()
