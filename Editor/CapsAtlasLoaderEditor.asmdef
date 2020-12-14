@@ -14,6 +14,9 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": []
+    "defineConstraints": [
+        "MOD_CAPSRESMANAGER"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
