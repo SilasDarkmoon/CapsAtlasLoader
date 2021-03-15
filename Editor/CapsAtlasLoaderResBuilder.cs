@@ -145,6 +145,7 @@ namespace Capstones.UnityEditorEx
         }
         public void Cleanup()
         {
+            PlatDependant.DeleteFile("Assets/StreamingAssets/res/inatlas.txt");
         }
         public void OnSuccess()
         {
