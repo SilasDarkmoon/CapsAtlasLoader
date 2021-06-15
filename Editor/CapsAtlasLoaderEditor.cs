@@ -566,11 +566,6 @@ namespace Capstones.UnityEditorEx
                     }
                 }
             }
-            //Debug.Log("Sprites in " + atlasPath);
-            //for (int i = 0; i < rv.Count; ++i)
-            //{
-            //    Debug.Log(rv[i]);
-            //}
             return rv.ToArray();
         }
 
@@ -682,99 +677,145 @@ namespace Capstones.UnityEditorEx
             }
         }
 
-        [MenuItem("Atlas/SetTextureCompression", priority = 100610)]
-        public static void SetTextureCompression()
+        //[MenuItem("Atlas/SetTextureCompression", priority = 100610)]
+        //public static void SetTextureCompression()
+        //{
+        //    var assets = Selection.objects;
+        //    int size = assets.Length;
+        //    if (assets != null && size > 0)
+        //    {
+        //        var tmpPath = CapsModEditor.FindAssetInMods("TextureTemplate.png");
+        //        var textureTmpImporter = TextureImporter.GetAtPath(tmpPath) as TextureImporter;
+        //        TextureImporterPlatformSettings androidTmpSettings = textureTmpImporter.GetPlatformTextureSettings("Android");
+        //        TextureImporterPlatformSettings iosTmpSettings = textureTmpImporter.GetPlatformTextureSettings("iOS");
+        //        for (int i = 0; i < size; i++)
+        //        {
+
+        //            Texture tex = assets[i] as Texture;
+        //            string path = AssetDatabase.GetAssetPath(tex);
+        //            string name = Path.GetFileName(path);
+        //            EditorUtility.DisplayProgressBar("===设置中===", name, i / size);
+        //            if (tex && (path.EndsWith(".png") ||
+        //                path.EndsWith(".jpg") ||
+        //                path.EndsWith(".tga") ||
+        //                path.EndsWith(".psd") ||
+        //                path.EndsWith(".bmp") ||
+        //                path.EndsWith(".tif") ||
+        //                path.EndsWith(".gif")))
+        //            {
+        //                TextureImporter texImporter = TextureImporter.GetAtPath(path) as TextureImporter;
+
+        //                TextureImporterPlatformSettings androidSettings = texImporter.GetPlatformTextureSettings("Android");
+        //                androidSettings.overridden = true;
+        //                androidSettings.maxTextureSize = 512;
+        //                androidSettings.format = androidTmpSettings.format;
+        //                androidSettings.compressionQuality = androidTmpSettings.compressionQuality;
+        //                texImporter.SetPlatformTextureSettings(androidSettings);
+
+        //                TextureImporterPlatformSettings iosSettings = texImporter.GetPlatformTextureSettings("iOS");
+        //                iosSettings.overridden = true;
+        //                iosSettings.maxTextureSize = 512;
+        //                iosSettings.format = iosTmpSettings.format;
+        //                iosSettings.compressionQuality = iosTmpSettings.compressionQuality;
+        //                texImporter.SetPlatformTextureSettings(iosSettings);
+
+        //                AssetDatabase.SaveAssets();
+        //                DoAssetReimport(path, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+        //            }
+        //        }
+
+        //        EditorUtility.ClearProgressBar();
+        //        EditorUtility.DisplayDialog("成功", "处理完成！", "好的");
+        //    }
+        //}
+
+        //[MenuItem("Atlas/Change ETC1 TO ETC2", priority = 100611)]
+        //public static void Change2ETC2()
+        //{
+        //    if (PlatDependant.IsFileExist("EditorOutput/Runtime/atlas.txt"))
+        //    {
+        //        string json = "";
+        //        using (var sr = PlatDependant.OpenReadText("EditorOutput/Runtime/atlas.txt"))
+        //        {
+        //            json = sr.ReadToEnd();
+        //        }
+        //        try
+        //        {
+        //            var jo = new JSONObject(json);
+        //            try
+        //            {
+        //                var joc = jo["atlas"] as JSONObject;
+        //                if (joc != null && joc.type == JSONObject.Type.ARRAY)
+        //                {
+        //                    int size = joc.list.Count;
+        //                    for (int i = 0; i < size; ++i)
+        //                    {
+        //                        var atlaspath = joc.list[i].str;
+        //                        EditorUtility.DisplayProgressBar("===设置中===", atlaspath, i / size);
+        //                        var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlaspath);
+        //                        TextureImporterPlatformSettings tips = SpriteAtlasExtensions.GetPlatformSettings(atlas, "Android");
+        //                        if (tips.format == TextureImporterFormat.ETC_RGB4)
+        //                        {
+        //                            tips.format = TextureImporterFormat.ETC2_RGBA8Crunched;
+        //                            SpriteAtlasExtensions.SetPlatformSettings(atlas, tips);
+        //                            SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, BuildTarget.Android, false);
+        //                        }
+        //                    }
+
+        //                    EditorUtility.ClearProgressBar();
+        //                    EditorUtility.DisplayDialog("成功", "处理完成！", "好的");
+        //                }
+        //            }
+        //            catch { }
+        //        }
+        //        catch { }
+        //    }
+        //}
+
+        [MenuItem("Atlas/Change Android SpriteAtlas to ASTC", priority = 100150)]
+        public static void ChangeSpriteAtlas2ASTC()
         {
-            var assets = Selection.objects;
-            int size = assets.Length;
-            if (assets != null && size > 0)
+            Dictionary<string, string> tag2path = new Dictionary<string, string>();
+            var path = CapsModEditor.FindAssetInMods("AtlasTemplate_Low.spriteatlas");
+            var template = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
+            TextureImporterPlatformSettings tips = SpriteAtlasExtensions.GetPlatformSettings(template, BuildTargetGroup.Android.ToString());
+            var allassets = AssetDatabase.GetAllAssetPaths();
+            //var allassets = Selection.objects;
+            List<SpriteAtlas> listAtlas = new List<SpriteAtlas>();
+            for (int i = 0; i < allassets.Length; ++i)
             {
-                var tmpPath = CapsModEditor.FindAssetInMods("TextureTemplate.png");
-                var textureTmpImporter = TextureImporter.GetAtPath(tmpPath) as TextureImporter;
-                TextureImporterPlatformSettings androidTmpSettings = textureTmpImporter.GetPlatformTextureSettings("Android");
-                TextureImporterPlatformSettings iosTmpSettings = textureTmpImporter.GetPlatformTextureSettings("iOS");
-                for (int i = 0; i < size; i++)
+                //var atlasTmp = allassets[i] as SpriteAtlas;
+                //string itemPath = AssetDatabase.GetAssetPath(atlasTmp);
+                var itemPath = allassets[i];
+                if (itemPath.EndsWith(".spriteatlas"))
                 {
-                    
-                    Texture tex = assets[i] as Texture;
-                    string path = AssetDatabase.GetAssetPath(tex);
-                    string name = Path.GetFileName(path);
-                    EditorUtility.DisplayProgressBar("===设置中===", name, i / size);
-                    if (tex && (path.EndsWith(".png") ||
-                        path.EndsWith(".jpg") ||
-                        path.EndsWith(".tga") ||
-                        path.EndsWith(".psd") ||
-                        path.EndsWith(".bmp") ||
-                        path.EndsWith(".tif") ||
-                        path.EndsWith(".gif")))
+                    var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(itemPath);
+                    if (!atlas)
                     {
-                        TextureImporter texImporter = TextureImporter.GetAtPath(path) as TextureImporter;
-
-                        TextureImporterPlatformSettings androidSettings = texImporter.GetPlatformTextureSettings("Android");
-                        androidSettings.overridden = true;
-                        androidSettings.maxTextureSize = 512;
-                        androidSettings.format = androidTmpSettings.format;
-                        androidSettings.compressionQuality = androidTmpSettings.compressionQuality;
-                        texImporter.SetPlatformTextureSettings(androidSettings);
-
-                        TextureImporterPlatformSettings iosSettings = texImporter.GetPlatformTextureSettings("iOS");
-                        iosSettings.overridden = true;
-                        iosSettings.maxTextureSize = 512;
-                        iosSettings.format = iosTmpSettings.format;
-                        iosSettings.compressionQuality = iosTmpSettings.compressionQuality;
-                        texImporter.SetPlatformTextureSettings(iosSettings);
-
-                        AssetDatabase.SaveAssets();
-                        DoAssetReimport(path, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+                        Debug.LogError("Failed to load " + itemPath);
                     }
-                }
-
-                EditorUtility.ClearProgressBar();
-                EditorUtility.DisplayDialog("成功", "处理完成！", "好的");
-            }
-        }
-
-        [MenuItem("Atlas/Change ETC1 TO ETC2", priority = 100611)]
-        public static void Change2ETC2()
-        {
-            if (PlatDependant.IsFileExist("EditorOutput/Runtime/atlas.txt"))
-            {
-                string json = "";
-                using (var sr = PlatDependant.OpenReadText("EditorOutput/Runtime/atlas.txt"))
-                {
-                    json = sr.ReadToEnd();
-                }
-                try
-                {
-                    var jo = new JSONObject(json);
-                    try
+                    else
                     {
-                        var joc = jo["atlas"] as JSONObject;
-                        if (joc != null && joc.type == JSONObject.Type.ARRAY)
+                        TextureImporterPlatformSettings tmpTIPS = atlas.GetPlatformSettings(BuildTargetGroup.Android.ToString());
+                        if (tmpTIPS.maxTextureSize > 1024)
                         {
-                            int size = joc.list.Count;
-                            for (int i = 0; i < size; ++i)
-                            {
-                                var atlaspath = joc.list[i].str;
-                                EditorUtility.DisplayProgressBar("===设置中===", atlaspath, i / size);
-                                var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlaspath);
-                                TextureImporterPlatformSettings tips = SpriteAtlasExtensions.GetPlatformSettings(atlas, "Android");
-                                if (tips.format == TextureImporterFormat.ETC_RGB4)
-                                {
-                                    tips.format = TextureImporterFormat.ETC2_RGBA8Crunched;
-                                    SpriteAtlasExtensions.SetPlatformSettings(atlas, tips);
-                                    SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, BuildTarget.Android, false);
-                                }
-                            }
-
-                            EditorUtility.ClearProgressBar();
-                            EditorUtility.DisplayDialog("成功", "处理完成！", "好的");
+                            Debug.LogError("The Atlas is too big " + itemPath);
+                            //continue;
+                        }
+                        //else if (tmpTIPS.format == TextureImporterFormat.ASTC_8x8)
+                        //{
+                        //    //Debug.LogError("The Atlas has been changed! " + itemPath);
+                        //}
+                        else
+                        {
+                            SpriteAtlasExtensions.SetPlatformSettings(atlas, tips);
+                            listAtlas.Add(atlas);
+                            Debug.Log("The Atlas will be Changing! " + itemPath);
                         }
                     }
-                    catch { }
                 }
-                catch { }
             }
+            SpriteAtlasUtility.PackAtlases(listAtlas.ToArray(), BuildTarget.Android, false);
         }
 
         private static void LoadCachedAtlas2()
