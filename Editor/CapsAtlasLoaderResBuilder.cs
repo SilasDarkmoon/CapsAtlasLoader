@@ -8,8 +8,11 @@ using Capstones.UnityEngineEx;
 
 namespace Capstones.UnityEditorEx
 {
-    public class CapsAtlasLoaderResBuilder : CapsResBuilder.IResBuilderEx
+    [InitializeOnLoad]
+    public class CapsAtlasLoaderResBuilder : CapsResBuilder.BaseResBuilderEx<CapsAtlasLoaderResBuilder>
     {
+        private static HierarchicalInitializer _Initializer = new HierarchicalInitializer(0);
+
         public const int CapsResManifestItemType_Atlas = 5;
         private class SpriteInAtlasInfo
         {
@@ -25,7 +28,7 @@ namespace Capstones.UnityEditorEx
         private readonly HashSet<string> _AtlasSet = new HashSet<string>();
         private readonly HashSet<string> _AtlasAssetSet = new HashSet<string>();
 
-        public void Prepare(string output)
+        public override void Prepare(string output)
         {
             _Output = output;
             _OldMap.Clear();
@@ -143,11 +146,11 @@ namespace Capstones.UnityEditorEx
                 }
             }
         }
-        public void Cleanup()
+        public override void Cleanup()
         {
             PlatDependant.DeleteFile("Assets/StreamingAssets/res/inatlas.txt");
         }
-        public void OnSuccess()
+        public override void OnSuccess()
         {
             var jo = new JSONObject(JSONObject.Type.OBJECT);
             var joc = new JSONObject(JSONObject.Type.OBJECT);
@@ -181,7 +184,7 @@ namespace Capstones.UnityEditorEx
         }
         private BuildingItemInfo _Building;
 
-        public string FormatBundleName(string asset, string mod, string dist, string norm)
+        public override string FormatBundleName(string asset, string mod, string dist, string norm)
         {
             _Building = null;
             if (asset.EndsWith("spriteatlas"))
@@ -205,11 +208,7 @@ namespace Capstones.UnityEditorEx
             }
             return null;
         }
-        public bool CreateItem(CapsResManifestNode node)
-        {
-            return false;
-        }
-        public void ModifyItem(CapsResManifestItem item)
+        public override void ModifyItem(CapsResManifestItem item)
         {
             if (_Building != null)
             {
@@ -254,7 +253,7 @@ namespace Capstones.UnityEditorEx
             }
         }
 
-        public void GenerateBuildWork(string bundleName, IList<string> assets, ref AssetBundleBuild abwork, CapsResBuilder.CapsResBuildWork modwork, int abindex)
+        public override void GenerateBuildWork(string bundleName, IList<string> assets, ref AssetBundleBuild abwork, CapsResBuilder.CapsResBuildWork modwork, int abindex)
         {
             if (assets != null)
             {
@@ -268,16 +267,6 @@ namespace Capstones.UnityEditorEx
                     }
                 }
             }
-        }
-    }
-
-    [InitializeOnLoad]
-    public static class CapsAtlasResBuilderEntry
-    {
-        private static CapsAtlasLoaderResBuilder _Builder = new CapsAtlasLoaderResBuilder();
-        static CapsAtlasResBuilderEntry()
-        {
-            CapsResBuilder.ResBuilderEx.Add(_Builder);
         }
     }
 }
