@@ -26,7 +26,11 @@ namespace Capstones.UnityEditorEx
         {
             if (PlatDependant.IsFileExist("EditorOutput/Runtime/atlas.txt"))
             {
-                LoadCachedAtlas();
+                if (LoadCachedAtlas())
+                {
+                    CacheAllAtlas();
+                    SaveCachedAtlas();
+                }
             }
             else
             {
@@ -62,10 +66,11 @@ namespace Capstones.UnityEditorEx
             };
         }
 
-        public static void LoadCachedAtlas()
+        public static bool LoadCachedAtlas()
         {
             _CachedAtlas.Clear();
             _CachedAtlasRev.Clear();
+            bool changed = false;
             //_TexInAtlas.Clear();
             if (PlatDependant.IsFileExist("EditorOutput/Runtime/atlas.txt"))
             {
@@ -85,9 +90,16 @@ namespace Capstones.UnityEditorEx
                             for (int i = 0; i < joc.list.Count; ++i)
                             {
                                 var val = joc.list[i].str;
-                                var name = System.IO.Path.GetFileNameWithoutExtension(val);
-                                _CachedAtlas[name] = val;
-                                _CachedAtlasRev[val] = name;
+                                if (System.IO.File.Exists(val))
+                                {
+                                    var name = System.IO.Path.GetFileNameWithoutExtension(val);
+                                    _CachedAtlas[name] = val;
+                                    _CachedAtlasRev[val] = name;
+                                }
+                                else
+                                {
+                                    changed = true;
+                                }
                             }
                         }
                         //joc = jo["tex"] as JSONObject;
@@ -113,6 +125,7 @@ namespace Capstones.UnityEditorEx
                 }
                 catch { }
             }
+            return changed;
         }
         public static void SaveCachedAtlas()
         {
