@@ -87,7 +87,7 @@ namespace Capstones.UnityEngineEx
             }
 #if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
             protected HashSet<string> _LoadingAtlasForABs = new HashSet<string>();
-            public bool LoadAssetBundle(string mod, string name, bool isContainingBundle, out ResManager.AssetBundleInfo bi)
+            public bool LoadAssetBundle(string mod, string name, bool asyncLoad, bool isContainingBundle, out ResManager.AssetBundleInfo bi)
             {
                 var abname = name;
                 if (!string.IsNullOrEmpty(mod))
