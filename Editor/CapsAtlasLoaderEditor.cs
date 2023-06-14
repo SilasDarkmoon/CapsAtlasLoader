@@ -438,6 +438,11 @@ namespace Capstones.UnityEditorEx
         {
             SetCurrentAtlasProperties("High");
         }
+        [MenuItem("Atlas/Set Atlas Settings - SuperHigh", priority = 100021)]
+        public static void SetCurrentAtlasPropertiesSuperHigh()
+        {
+            SetCurrentAtlasProperties("SuperHigh");
+        }
         [MenuItem("Atlas/Rename Atlas", priority = 100030)]
         public static void RenameCurrentAtlas()
         {
