@@ -836,6 +836,72 @@ namespace Capstones.UnityEditorEx
             SpriteAtlasUtility.PackAtlases(listAtlas.ToArray(), BuildTarget.Android, false);
         }
 
+        /// <summary>
+        /// 把大卡图片通过图片名的hashcode，打到对应的图集里
+        /// 这样有助于在热更时，不会每次都更新所有的图片
+        /// </summary>
+        /// <param name="preAtlasPath">所在父级文件夹</param>
+        /// <param name="spritesToPack"></param>
+
+        public static void CardImg2HashCodeSpriteAtlas(string preAtlasPath, Dictionary<int, List<Sprite>> spritesToPack)
+        {
+            SpriteAtlas spriteAtlas = null;
+            SpriteAtlas templateAtlas = null;
+            var path = CapsModEditor.FindAssetInMods("AtlasTemplate_Low.spriteatlas");
+            if (path != null)
+            {
+                templateAtlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
+
+                foreach (KeyValuePair<int, List<Sprite>> kv in spritesToPack)
+                {
+                    string code = kv.Key.ToString();
+                    string folderPath = preAtlasPath + "/" + code;
+                    if (!Directory.Exists(folderPath))
+                    {
+                        Directory.CreateDirectory(folderPath);
+                        var atlasFiles = Directory.GetFiles(folderPath, "*.spriteatlas");
+                        if (!atlasFiles.Any())
+                        {
+                            spriteAtlas = new SpriteAtlas();
+                        }
+                    }
+                    else
+                    {
+                        string[] atlasFiles = AssetDatabase.FindAssets("t:SpriteAtlas", new string[] { folderPath });
+                        if (atlasFiles.Length > 0)
+                        {
+                            spriteAtlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasFiles[0]);
+
+                            UnityEngine.Object[] spritesInAtlas = spriteAtlas.GetPackables();
+                            spriteAtlas.Remove(spritesInAtlas);
+                        }
+                    }
+
+                    if (spriteAtlas == null)
+                    {
+                        Debug.LogErrorFormat("Could not find the atlas : {0}", folderPath);
+                        continue;
+                    }
+
+                    UnityEngine.Object[] objects = new UnityEngine.Object[kv.Value.Count];
+                    for (int i = 0; i < kv.Value.Count; i++)
+                    {
+                        objects[i] = kv.Value[i].texture;
+                    }
+                    spriteAtlas.Add(objects);
+
+                    if (spriteAtlas != null)
+                    {
+                        string atlasPath = folderPath + "/" + "New Sprite Atlas.spriteatlas";
+                        AssetDatabase.CreateAsset(spriteAtlas, atlasPath);
+                        AssetDatabase.SaveAssets();
+
+                        PackAtlas(spriteAtlas, atlasPath, templateAtlas);
+                    }
+                }
+            }
+        }
+
         private static void LoadCachedAtlas2()
         {
             _CachedAtlasSpriteGUID.Clear();
@@ -967,6 +1033,49 @@ namespace Capstones.UnityEditorEx
             {
                 AssetDatabase.StopAssetEditing();
             }
+        }
+
+        /// <summary>
+        /// 图集打包，且设置图集参数
+        /// </summary>
+        /// <param name="atlas">目标图集</param>
+        /// <param name="atlasPath">目标图集路径</param>
+        /// <param name="template">模板图集</param>
+        private static void PackAtlas(SpriteAtlas atlas, string atlasPath, SpriteAtlas template)
+        {
+            SpriteAtlasExtensions.SetIncludeInBuild(atlas, false);
+            SpriteAtlasExtensions.SetPackingSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetPackingSettings(template));
+            SpriteAtlasExtensions.SetTextureSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetTextureSettings(template));
+            SpriteAtlasExtensions.SetPlatformSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(template, "DefaultTexturePlatform"));
+            var buildTargetNames = Enum.GetNames(typeof(BuildTargetGroup));
+            for (int j = 0; j < buildTargetNames.Length; ++j)
+            {
+                var platsettings = UnityEditor.U2D.SpriteAtlasExtensions.GetPlatformSettings(template, buildTargetNames[j]);
+                if (platsettings != null && platsettings.overridden)
+                {
+                    SpriteAtlasExtensions.SetPlatformSettings(atlas, platsettings);
+
+                    BuildTargetGroup bgroup;
+                    Enum.TryParse(buildTargetNames[j], out bgroup);
+                    for (int k = 0; k < buildTargetNames.Length; ++k)
+                    {
+                        BuildTargetGroup bgroupcur;
+                        Enum.TryParse(buildTargetNames[k], out bgroupcur);
+                        if (bgroup == bgroupcur)
+                        {
+                            BuildTarget btar;
+                            if (Enum.TryParse(buildTargetNames[k], out btar))
+                            {
+                                Debug.LogFormat("Now packing {0} on {1}.", atlas.name, btar);
+                                UnityEditor.U2D.SpriteAtlasUtility.PackAtlases(new UnityEngine.U2D.SpriteAtlas[] { atlas }, btar, false);
+                                Debug.LogFormat("Packing done {0} on {1}.", atlas.name, btar);
+                            }
+                        }
+                    }
+                }
+            }
+
+            RenameAtlasName(atlasPath);
         }
     }
 }
