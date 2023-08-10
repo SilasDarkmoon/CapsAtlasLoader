@@ -854,6 +854,7 @@ namespace Capstones.UnityEditorEx
 
                 foreach (KeyValuePair<int, List<Sprite>> kv in spritesToPack)
                 {
+                    bool isNewAtlas = true;
                     string code = kv.Key.ToString();
                     string folderPath = preAtlasPath + "/" + code;
                     if (!Directory.Exists(folderPath))
@@ -867,10 +868,12 @@ namespace Capstones.UnityEditorEx
                     }
                     else
                     {
+                        isNewAtlas = false;
                         string[] atlasFiles = AssetDatabase.FindAssets("t:SpriteAtlas", new string[] { folderPath });
                         if (atlasFiles.Length > 0)
                         {
-                            spriteAtlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasFiles[0]);
+                            string atlasPath = AssetDatabase.GUIDToAssetPath(atlasFiles[0]);
+                            spriteAtlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasPath);
 
                             UnityEngine.Object[] spritesInAtlas = spriteAtlas.GetPackables();
                             spriteAtlas.Remove(spritesInAtlas);
@@ -893,10 +896,13 @@ namespace Capstones.UnityEditorEx
                     if (spriteAtlas != null)
                     {
                         string atlasPath = folderPath + "/" + "New Sprite Atlas.spriteatlas";
-                        AssetDatabase.CreateAsset(spriteAtlas, atlasPath);
+                        if (isNewAtlas)
+                        {
+                            AssetDatabase.CreateAsset(spriteAtlas, atlasPath);
+                        }
                         AssetDatabase.SaveAssets();
 
-                        PackAtlas(spriteAtlas, atlasPath, templateAtlas);
+                        PackAtlas(spriteAtlas, atlasPath, templateAtlas, isNewAtlas);
                     }
                 }
             }
@@ -1041,7 +1047,8 @@ namespace Capstones.UnityEditorEx
         /// <param name="atlas">目标图集</param>
         /// <param name="atlasPath">目标图集路径</param>
         /// <param name="template">模板图集</param>
-        private static void PackAtlas(SpriteAtlas atlas, string atlasPath, SpriteAtlas template)
+        /// <param name="isNewAtlas">是否是新图集</param>
+        private static void PackAtlas(SpriteAtlas atlas, string atlasPath, SpriteAtlas template, bool isNewAtlas)
         {
             SpriteAtlasExtensions.SetIncludeInBuild(atlas, false);
             SpriteAtlasExtensions.SetPackingSettings(atlas, UnityEditor.U2D.SpriteAtlasExtensions.GetPackingSettings(template));
@@ -1075,7 +1082,10 @@ namespace Capstones.UnityEditorEx
                 }
             }
 
-            RenameAtlasName(atlasPath);
+            if (isNewAtlas)
+            {
+                RenameAtlasName(atlasPath);
+            }
         }
     }
 }
