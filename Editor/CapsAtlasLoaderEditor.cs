@@ -626,31 +626,82 @@ namespace Capstones.UnityEditorEx
         [MenuItem("Atlas/Show Multi-Binded Sprites", priority = 100130)]
         public static void ShowMultiBindedSprites()
         {
-            Dictionary<string, string> sprite2atlas = new Dictionary<string, string>();
-            foreach (var kvp in _CachedAtlas)
+            Dictionary<string, HashSet<string>> sprite2atlas = new Dictionary<string, HashSet<string>>();
+            var allatlas = AssetDatabase.FindAssets("t:SpriteAtlas");
+            foreach (var atlasguid in allatlas)
             {
-                var atlas = kvp.Value;
-                var loaded = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlas);
-                if (loaded)
+                var atlas = AssetDatabase.GUIDToAssetPath(atlasguid);
+                if (atlas == null) continue;
+                var atlasasset = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlas);
+                if (atlasasset != null)
                 {
-                    if (!loaded.isVariant)
+                    var packables = atlasasset.GetPackables();
+                    foreach (var packable in packables)
                     {
-                        var packed = GetPackedPathsInAtlas(atlas);
-                        foreach (var sprite in packed)
+                        if (packable is Sprite || packable is Texture)
                         {
-                            string existing;
-                            if (sprite2atlas.TryGetValue(sprite, out existing))
+                            var srcpath = AssetDatabase.GetAssetPath(packable);
+                            HashSet<string> list;
+                            if (!sprite2atlas.TryGetValue(srcpath, out list))
                             {
-                                Debug.LogError(sprite + " is in multiple atlas: " + existing + " & " + atlas);
+                                list = new HashSet<string>();
+                                sprite2atlas[srcpath] = list;
                             }
-                            else
+                            list.Add(atlas);
+                        }
+                        else
+                        {
+                            try
                             {
-                                sprite2atlas[sprite] = atlas;
+                                var srcpath = AssetDatabase.GetAssetPath(packable);
+                                var subitems = PlatDependant.GetAllFiles(srcpath);
+                                foreach (var subpath in subitems)
+                                {
+                                    try
+                                    {
+                                        if (AssetDatabase.LoadMainAssetAtPath(subpath) is Texture or Sprite)
+                                        {
+                                            HashSet<string> list;
+                                            if (!sprite2atlas.TryGetValue(subpath, out list))
+                                            {
+                                                list = new HashSet<string>();
+                                                sprite2atlas[subpath] = list;
+                                            }
+                                            list.Add(atlas);
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Debug.LogException(e);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogException(ex);
                             }
                         }
                     }
                 }
             }
+
+            using (var logfile = PlatDependant.OpenWriteText("EditorOutput/Atlas/DupAtlas.txt"))
+            {
+                foreach (var kvp in sprite2atlas)
+                {
+                    if (kvp.Value.Count > 1)
+                    {
+                        logfile.WriteLine(kvp.Key);
+                        foreach (var atlas in kvp.Value)
+                        {
+                            logfile.Write("     -> ");
+                            logfile.WriteLine(atlas);
+                        }
+                        logfile.WriteLine();
+                    }
+                }
+            }
+            EditorUtility.OpenWithDefaultApp("EditorOutput/Atlas/DupAtlas.txt");
         }
         [MenuItem("Atlas/Show SpriteAtlas with Same Tag", priority = 100140)]
         public static void ShowSpriteAtlasNameConflict()
