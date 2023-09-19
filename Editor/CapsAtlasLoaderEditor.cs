@@ -522,6 +522,73 @@ namespace Capstones.UnityEditorEx
                 }
             }
         }
+        [MenuItem("Atlas/Create Atlas Variants (Small)", priority = 100041)]
+        public static void CreateAtlasVariantsSmall()
+        {
+            try
+            {
+                AssetDatabase.DeleteAsset("Assets/Mods/smallatlas");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+            try
+            {
+                System.IO.Directory.Delete("Assets/Mods/smallatlas", true);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+
+            var guids = AssetDatabase.FindAssets("t:SpriteAtlas");
+            if (guids != null)
+            {
+                for (int i = 0; i < guids.Length; ++i)
+                {
+                    var guid = guids[i];
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (path.EndsWith(".spriteatlas"))
+                    {
+                        var atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
+                        if (atlas && !atlas.isVariant)
+                        {
+                            string type, mod, dist;
+                            string norm = ResManager.GetAssetNormPath(path, out type, out mod, out dist);
+                            if (type == "res")
+                            {
+                                var smallAtlasPath = "Assets/Mods/smallatlas/CapsRes/";
+                                if (!string.IsNullOrEmpty(dist))
+                                {
+                                    smallAtlasPath += "dist/" + dist + "/";
+                                }
+                                smallAtlasPath += norm;
+                                var smallAtlasDir = Path.GetDirectoryName(smallAtlasPath);
+                                Directory.CreateDirectory(smallAtlasDir);
+                                AssetDatabase.ImportAsset(smallAtlasDir);
+
+                                var vatlas = UnityEngine.Object.Instantiate(atlas);
+                                vatlas.SetIsVariant(true);
+                                vatlas.SetMasterAtlas(atlas);
+                                vatlas.SetVariantScale(0.5f);
+
+                                AssetDatabase.CreateAsset(vatlas, smallAtlasPath);
+                            }
+                        }
+                    }
+                }
+                if (System.IO.Directory.Exists("Assets/Mods/smallatlas"))
+                {
+                    var descdir = "Assets/Mods/smallatlas/Resources";
+                    System.IO.Directory.CreateDirectory(descdir);
+                    AssetDatabase.ImportAsset(descdir);
+                    var desc = ScriptableObject.CreateInstance<CapsModDesc>();
+                    desc.Mod = "smallatlas";
+                    AssetDatabase.CreateAsset(desc, "Assets/Mods/smallatlas/Resources/resdesc.asset");
+                }
+            }
+        }
         [MenuItem("Atlas/Move Master Atlas Back", priority = 100050)]
         public static void MoveBackMasterAtlas()
         {
