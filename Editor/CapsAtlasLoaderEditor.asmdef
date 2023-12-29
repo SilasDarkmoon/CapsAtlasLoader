@@ -1,10 +1,15 @@
 {
     "name": "CapsAtlasLoaderEditor",
+    "rootNamespace": "",
     "references": [
         "ResManager",
+        "ResManagerAB",
+        "ResManagerEditorEntry",
         "ResManagerEditor",
         "JsonObject",
-        "ResManagerEditor.ResBuilder"
+        "ResManagerEditor.ResBuilder",
+        "CapsMods",
+        "CapsModsEditor"
     ],
     "includePlatforms": [
         "Editor"

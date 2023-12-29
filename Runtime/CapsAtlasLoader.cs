@@ -18,7 +18,7 @@ namespace Capstones.UnityEngineEx
     public static class CapsAtlasLoader
     {
         public const int CapsResManifestItemType_Atlas = 5;
-        public class AssetInfo_Atlas : UnityEngineEx.ResManager.ClientResLoader.AssetInfo_Normal
+        public class AssetInfo_Atlas : UnityEngineEx.ResManagerAB.ClientResLoader.AssetInfo_Normal
         {
             protected override Object LoadMainAsset()
             {
@@ -67,7 +67,7 @@ namespace Capstones.UnityEngineEx
 #if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
         private static Dictionary<string, HashSet<string>> _AssetBundleAtlasDepInfos = new Dictionary<string, HashSet<string>>();
 #endif
-        public class TypedResLoader_Atlas : UnityEngineEx.ResManager.ClientResLoader.TypedResLoader_Normal
+        public class TypedResLoader_Atlas : UnityEngineEx.ResManagerAB.ClientResLoader.TypedResLoader_Normal
 #if FIX_LOAD_ATLAS_IN_ASSET_BUNDLE
             , ResManager.IAssetBundleLoaderEx
 #endif
@@ -81,7 +81,7 @@ namespace Capstones.UnityEngineEx
 
             public override int ResItemType { get { return CapsResManifestItemType_Atlas; } }
 
-            protected override UnityEngineEx.ResManager.ClientResLoader.AssetInfo_Base CreateAssetInfoRaw(CapsResManifestItem item)
+            protected override UnityEngineEx.ResManagerAB.ClientResLoader.AssetInfo_Base CreateAssetInfoRaw(CapsResManifestItem item)
             {
                 return new AssetInfo_Atlas() { ManiItem = item };
             }
@@ -125,7 +125,7 @@ namespace Capstones.UnityEngineEx
 #if FIX_LOAD_ATLAS_CRASH_ON_DISPOSED_SPRITE
             TrackedImages = typeof(Image).GetField("m_TrackedTexturelessImages", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null) as List<Image>;
 #endif
-            if (ResManager.ResLoader is ResManager.ClientResLoader)
+            if (ResManager.ResLoader is ResManagerAB.ClientResLoader)
             {
                 // TODO: when we change the ResLoader dynamically (from EditorResLoader to ClientResLoader), we should call this again.
                 // or (from ClientResLoader to EditorResLoader) we should unregister SpriteAtlasManager.atlasRequested.

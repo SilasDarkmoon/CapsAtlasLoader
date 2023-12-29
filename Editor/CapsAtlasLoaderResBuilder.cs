@@ -253,7 +253,7 @@ namespace Capstones.UnityEditorEx
             }
         }
 
-        public override void GenerateBuildWork(string bundleName, IList<string> assets, ref AssetBundleBuild abwork, CapsResBuilder.CapsResBuildWork modwork, int abindex)
+        public override void GenerateBuildWork(string bundleName, IList<string> assets, CapsResBuilder.IBundleBuildInfo bwork, CapsResBuilder.ICapsResBuildWork modwork, int abindex)
         {
             if (assets != null)
             {
@@ -262,7 +262,7 @@ namespace Capstones.UnityEditorEx
                     var asset = assets[i];
                     if (_SpriteSet.Contains(asset) || _AtlasAssetSet.Contains(asset))
                     {
-                        modwork.ForceRefreshABs.Add(abindex);
+                        modwork.ForceRefreshBundles.Add(abindex);
                         break;
                     }
                 }
