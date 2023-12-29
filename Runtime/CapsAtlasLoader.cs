@@ -125,7 +125,7 @@ namespace Capstones.UnityEngineEx
 #if FIX_LOAD_ATLAS_CRASH_ON_DISPOSED_SPRITE
             TrackedImages = typeof(Image).GetField("m_TrackedTexturelessImages", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null) as List<Image>;
 #endif
-            if (ResManager.ResLoader is ResManagerAB.ClientResLoader)
+            if (ResManager.IsClientResLoader)
             {
                 // TODO: when we change the ResLoader dynamically (from EditorResLoader to ClientResLoader), we should call this again.
                 // or (from ClientResLoader to EditorResLoader) we should unregister SpriteAtlasManager.atlasRequested.

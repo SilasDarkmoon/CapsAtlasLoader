@@ -40,7 +40,7 @@ namespace Capstones.UnityEditorEx
 
             UnityEngine.U2D.SpriteAtlasManager.atlasRequested += (name, funcReg) =>
             {
-                if (UnityEditor.EditorSettings.spritePackerMode == UnityEditor.SpritePackerMode.AlwaysOnAtlas && !(ResManager.ResLoader is ResManagerAB.ClientResLoader))
+                if (UnityEditor.EditorSettings.spritePackerMode == UnityEditor.SpritePackerMode.AlwaysOnAtlas && !ResManager.IsClientResLoader)
                 {
                     string assetName;
                     if (_CachedAtlas.TryGetValue(name, out assetName))
